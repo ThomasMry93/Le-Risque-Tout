@@ -1,0 +1,1860 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Le Risque Tout</title>
+<meta name="description" content="Le Risque Tout : quiz de soirée avec un maître du jeu, en mode Classique ou Hardcore.">
+<meta name="theme-color" content="#0e0d0d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Risque Tout">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Bowlby+One&family=Montserrat:wght@600;700;800&display=swap">
+<style>
+/* Base commune */
+:root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+body { margin: 0; font: 14px system-ui, -apple-system, "Segoe UI", sans-serif; -webkit-tap-highlight-color: transparent; }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<style>
+/* Plateau noir granuleux, catégories en pilules cerclées de rouge, cases blanches à multiplicateur rouge, Risque Tout rouge plein, Mega Risque Tout noir cerclé */
+:root {
+  --ground: #0e0d0d;
+  --panel: #151313;
+  --line: #2a2626;
+  --ink: #ffffff;
+  --red: #e2232e;
+  --pill: #f4f2f0;
+  --used: #8a8786;
+  --used-ink: #5a5756;
+  --muted: #b9b4b2;
+  --f-score: "Bowlby One", "Arial Black", Impact, sans-serif;
+  --f-label: "Archivo Black", "Arial Black", Impact, sans-serif;
+  --f-text: "Montserrat", "Segoe UI", Arial, sans-serif;
+  color-scheme: dark;
+}
+html, body { min-height: 100%; }
+body {
+  background-color: var(--ground);
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+    radial-gradient(ellipse at 50% 20%, #1d1a1a 0%, var(--ground) 70%);
+  background-attachment: fixed;
+  color: var(--ink);
+  font-family: var(--f-text);
+  padding: 0 16px;
+}
+.wrap { max-width: 920px; margin: 0 auto; padding-block: 24px 48px; display: grid; gap: 24px; }
+button { font: inherit; color: inherit; }
+h1 { margin: 0; font-family: var(--f-label); font-size: clamp(2rem, 8vw, 3.4rem); text-transform: uppercase; line-height: .95; letter-spacing: .01em; text-wrap: balance; }
+h1 span { color: var(--red); }
+h2 { margin: 0; font-family: var(--f-label); text-transform: uppercase; letter-spacing: .04em; font-size: 1.15rem; }
+.lead { margin: 0; color: var(--muted); font-weight: 600; line-height: 1.5; max-width: 60ch; }
+.eyebrow { font-family: var(--f-label); text-transform: uppercase; letter-spacing: .1em; font-size: .72rem; color: var(--red); }
+.stack { display: grid; gap: 16px; }
+.screen { display: grid; gap: 24px; }
+
+/* Boutons */
+.btn {
+  font-family: var(--f-label); text-transform: uppercase; letter-spacing: .05em; font-size: .9rem;
+  border-radius: 999px; padding: 14px 24px; cursor: pointer; border: 2px solid var(--red);
+  background: #000; color: var(--ink);
+}
+.btn.primary { background: var(--red); }
+.btn.light { background: var(--pill); color: var(--red); border-color: var(--pill); }
+.btn.ghost { border-color: #3a3535; color: var(--muted); }
+.btn.small { padding: 10px 16px; font-size: .78rem; }
+.btn:disabled { opacity: .4; cursor: default; }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+.actions { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+.link { background: none; border: 0; color: var(--muted); font-weight: 700; text-decoration: underline; cursor: pointer; padding: 4px; }
+
+/* Accueil */
+.modes { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.mode { text-align: left; cursor: pointer; border-radius: 22px; padding: 22px; display: grid; gap: 10px; align-content: start; border: 2px solid var(--red); background: #000; box-shadow: 0 10px 26px rgba(0,0,0,.55); }
+.mode.hard { background: var(--red); }
+.mode .name { font-family: var(--f-score); font-size: clamp(1.5rem, 5vw, 2rem); line-height: 1; text-transform: uppercase; }
+.mode ul { margin: 0; padding-left: 1.1em; display: grid; gap: 4px; font-weight: 600; font-size: .9rem; line-height: 1.4; }
+.mode .tag { font-family: var(--f-label); font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; opacity: .85; }
+.fine { margin: 0; font-size: .78rem; color: var(--muted); text-align: center; }
+
+/* Joueurs */
+.players { display: grid; gap: 10px; }
+.player-row { display: flex; gap: 10px; align-items: center; }
+.player-row input { flex: 1; min-width: 0; font: inherit; font-weight: 700; font-size: 1rem; color: var(--ink); background: #000; border: 2px solid #3a3535; border-radius: 999px; padding: 12px 18px; }
+.player-row input:focus { border-color: var(--red); }
+.x { width: 44px; height: 44px; flex: none; border-radius: 50%; border: 2px solid #3a3535; background: #000; cursor: pointer; font-family: var(--f-label); color: var(--muted); }
+
+/* Thèmes */
+.chips { display: flex; flex-wrap: wrap; gap: 10px; }
+.chip { font-family: var(--f-label); text-transform: uppercase; letter-spacing: .04em; font-size: .78rem; padding: 11px 16px; border-radius: 999px; cursor: pointer; border: 2px solid var(--red); background: #000; }
+.settings summary { list-style: none; cursor: pointer; display: grid; gap: 4px; }
+.settings summary::-webkit-details-marker { display: none; }
+.settings summary .eyebrow::after { content: "  ▾"; }
+.settings[open] summary .eyebrow::after { content: "  ▴"; }
+.settings-body { display: grid; gap: 10px; padding-top: 6px; }
+.chip.played { border-style: dashed; border-color: var(--used); color: var(--muted); position: relative; }
+.chip.mini.played::after, .dot { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--used); }
+.chip.mini.played::after { position: absolute; top: -3px; right: -3px; border: 2px solid var(--ground); }
+.chip.on.played { background: var(--used); border-color: var(--used); color: #111; border-style: solid; }
+.played-tag { font-family: var(--f-text); font-weight: 800; text-transform: none; letter-spacing: 0; font-size: .7rem; opacity: .8; }
+.played-bar { display: flex; justify-content: space-between; align-items: center; gap: 8px 14px; flex-wrap: wrap; }
+.chip.mini { min-width: 42px; padding: 9px 12px; text-align: center; }
+.search { font: inherit; font-weight: 700; color: var(--ink); background: #000; border: 2px solid #3a3535; border-radius: 999px; padding: 11px 18px; width: 100%; box-sizing: border-box; }
+.search:focus { border-color: var(--red); }
+.families { display: grid; gap: 8px; max-height: 420px; overflow-y: auto; padding-right: 4px; }
+.family { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; border-top: 1px solid var(--line); }
+.family[hidden] { display: none; }
+.family-name { font-family: var(--f-label); text-transform: uppercase; letter-spacing: .03em; font-size: .82rem; min-width: 0; }
+.family-series { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+.chip.on { background: var(--pill); color: var(--red); border-color: var(--pill); display: inline-flex; align-items: center; gap: 10px; cursor: default; }
+.chip.on button { border: 0; background: var(--red); color: var(--ink); width: 22px; height: 22px; border-radius: 50%; font-size: .7rem; cursor: pointer; display: grid; place-items: center; padding: 0; }
+.adder { display: grid; gap: 14px; padding: 18px; border-radius: 18px; background: var(--panel); border: 2px solid var(--line); }
+.empty { color: var(--muted); font-weight: 600; margin: 0; }
+
+/* Bandeau de partie */
+.top { display: grid; gap: 14px; }
+.top-line { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.brand { font-family: var(--f-label); text-transform: uppercase; font-size: 1.1rem; }
+.brand span { color: var(--red); }
+.badge-mode { font-family: var(--f-label); font-size: .68rem; letter-spacing: .1em; text-transform: uppercase; border-radius: 999px; padding: 4px 10px; border: 2px solid var(--red); margin-left: 8px; vertical-align: middle; }
+.badge-mode.hard { background: var(--red); }
+.brand .badge-mode { color: var(--ink); }
+.scores { display: flex; gap: 8px; flex-wrap: wrap; }
+.score { display: flex; align-items: center; gap: 10px; padding: 8px 14px; border-radius: 999px; background: #000; border: 2px solid var(--line); font-weight: 800; font-size: .9rem; cursor: pointer; text-align: left; }
+.score b { font-family: var(--f-score); font-weight: 400; font-size: 1.1rem; color: var(--red); font-variant-numeric: tabular-nums; }
+.score .drink { font-size: .78rem; color: var(--muted); font-weight: 700; }
+.score .drink b { font-size: .95rem; }
+.score.turn { border-color: var(--red); background: var(--panel); }
+.score.editing { border-color: var(--pill); }
+.hint-line { font-size: .75rem; color: var(--muted); font-weight: 600; margin: 0; }
+.turn-banner { font-family: var(--f-label); text-transform: uppercase; letter-spacing: .03em; font-size: 1rem; text-align: center; }
+.turn-banner em { font-style: normal; color: var(--red); }
+
+/* Ajusteur */
+.editor { display: grid; gap: 12px; padding: 16px; border-radius: 18px; background: var(--panel); border: 2px solid var(--pill); }
+.editor-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-family: var(--f-label); text-transform: uppercase; font-size: .85rem; letter-spacing: .04em; }
+.stepper { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.stepper .lbl { font-weight: 800; }
+.stepper .ctrl { display: flex; align-items: center; gap: 8px; }
+.stepper .val { font-family: var(--f-score); font-size: 1.4rem; min-width: 2.4em; text-align: center; font-variant-numeric: tabular-nums; color: var(--red); }
+.step { min-width: 44px; height: 44px; padding: 0 10px; border-radius: 999px; border: 2px solid var(--red); background: #000; font-family: var(--f-label); cursor: pointer; }
+.step.plus { background: var(--pill); color: var(--red); border-color: var(--pill); }
+.step:disabled { opacity: .35; cursor: default; }
+
+/* Confirmation */
+.confirm { display: grid; gap: 12px; padding: 18px; border-radius: 18px; border: 2px solid var(--red); background: #000; text-align: center; font-weight: 700; }
+
+/* Plateau */
+.board { display: grid; gap: 16px; }
+.row { display: grid; grid-template-columns: 1.4fr repeat(5, 1fr) 1.7fr; gap: 10px; align-items: center; }
+.hardcore .row { grid-template-columns: 1.3fr repeat(5, .85fr) 1.45fr 1.45fr; gap: 8px; }
+.cat { font-family: var(--f-label); text-transform: uppercase; letter-spacing: .03em; font-size: .76rem; text-align: center; padding: 13px 8px; border: 2px solid var(--red); border-radius: 999px; background: #000; box-shadow: 0 6px 18px rgba(0,0,0,.5); min-width: 0; }
+.cell { font-family: var(--f-score); font-size: 1.35rem; line-height: 1; color: var(--red); background: var(--pill); border: 2px solid var(--pill); border-radius: 999px; padding: 12px 0 10px; cursor: pointer; box-shadow: 0 6px 16px rgba(0,0,0,.55); transition: transform .12s ease, box-shadow .12s ease; white-space: nowrap; min-width: 0; }
+.cell small { font-size: .62em; margin-right: 1px; }
+.cell.rt { background: var(--red); border-color: var(--red); color: var(--ink); font-size: .9rem; padding: 15px 6px 13px; letter-spacing: .02em; }
+.cell.mega { background: #000; border-color: var(--red); color: var(--ink); font-size: .9rem; padding: 6px 6px 5px; line-height: 1.05; }
+.cell.mega span { display: block; font-size: .62rem; font-family: var(--f-label); letter-spacing: .06em; color: var(--red); }
+.cell:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 22px rgba(0,0,0,.6), 0 0 0 2px var(--red); }
+.cell:disabled { background: var(--used); border-color: var(--used); color: var(--used-ink); cursor: default; box-shadow: none; }
+.cell.mega:disabled span { color: var(--used-ink); }
+
+/* Question */
+.qbar { display: grid; grid-template-columns: auto 1fr; border-radius: 6px; overflow: hidden; background: var(--panel); box-shadow: 0 10px 30px rgba(0,0,0,.6); }
+.qbadge { background: var(--pill); color: var(--red); font-family: var(--f-score); font-size: clamp(2rem, 7vw, 3rem); display: grid; place-items: center; padding: 10px 22px; line-height: 1; text-align: center; }
+.qbadge.rt { background: var(--red); color: var(--ink); font-size: clamp(1.1rem, 4vw, 1.5rem); line-height: 1.05; }
+.qbadge.mega { background: #000; color: var(--ink); box-shadow: inset 0 0 0 3px var(--red); font-size: clamp(1rem, 3.6vw, 1.35rem); line-height: 1.05; }
+.qbadge.mega span { color: var(--red); font-size: 1.6em; display: block; }
+.qtext { padding: 16px 20px; display: grid; gap: 6px; align-content: center; min-width: 0; }
+.qtext p { margin: 0; font-weight: 700; font-size: clamp(1.05rem, 3.2vw, 1.35rem); line-height: 1.35; text-wrap: balance; }
+.stakes { text-align: center; font-weight: 700; color: var(--muted); margin: 0; line-height: 1.5; }
+.stakes b { color: var(--ink); }
+.answer { border: 2px solid var(--red); border-radius: 14px; padding: 16px 20px; background: #000; font-family: var(--f-label); font-size: 1.3rem; text-align: center; text-transform: uppercase; letter-spacing: .03em; }
+.answer .eyebrow { display: block; margin-bottom: 6px; }
+
+/* Verdict */
+.verdict { display: grid; gap: 10px; justify-items: center; text-align: center; padding: 30px 20px; border-radius: 22px; background: #000; border: 2px solid var(--red); }
+.verdict.win { background: var(--pill); color: #111; border-color: var(--pill); }
+.verdict .big { font-family: var(--f-score); font-size: clamp(2rem, 9vw, 3.6rem); line-height: 1; color: var(--red); text-transform: uppercase; }
+.verdict .who { font-family: var(--f-label); text-transform: uppercase; letter-spacing: .05em; }
+.verdict p { margin: 0; font-weight: 700; line-height: 1.45; max-width: 44ch; }
+.give { display: grid; gap: 12px; padding: 18px; border-radius: 18px; background: var(--panel); border: 2px solid var(--line); }
+.give h2 { font-size: 1rem; }
+.targets { display: flex; flex-wrap: wrap; gap: 10px; }
+
+/* Classement */
+.ranking { display: grid; gap: 10px; }
+.rank { display: grid; grid-template-columns: 2.2em 1fr auto; align-items: center; gap: 12px; padding: 14px 18px; border-radius: 999px; background: #000; border: 2px solid var(--line); font-weight: 800; }
+.rank.first { background: var(--red); border-color: var(--red); }
+.rank .pos { font-family: var(--f-score); font-weight: 400; }
+.rank .pts { font-family: var(--f-score); font-weight: 400; font-variant-numeric: tabular-nums; text-align: right; }
+
+/* Règles */
+.top-links { display: flex; gap: 14px; }
+.rules { display: grid; gap: 16px; }
+.rule-block { display: grid; gap: 10px; padding: 18px; border-radius: 18px; background: var(--panel); border: 2px solid var(--line); min-width: 0; }
+.rule-block p { margin: 0; font-weight: 600; line-height: 1.55; max-width: 65ch; }
+.rules table { width: 100%; border-collapse: collapse; font-size: .88rem; font-weight: 700; }
+.rules th { font-family: var(--f-label); text-transform: uppercase; letter-spacing: .05em; font-size: .68rem; color: var(--muted); text-align: left; padding: 6px 8px 8px 0; font-weight: 400; }
+.rules td { padding: 10px 8px 10px 0; border-top: 1px solid var(--line); vertical-align: top; }
+.rules td:first-child { font-family: var(--f-label); color: var(--red); width: 28%; font-weight: 400; }
+
+@media (max-width: 680px) {
+  .modes { grid-template-columns: 1fr; }
+  .row, .hardcore .row { grid-template-columns: repeat(10, 1fr); gap: 8px; }
+  .cat { grid-column: 1 / -1; padding: 10px; font-size: .8rem; }
+  .cell { grid-column: span 2; font-size: 1.15rem; }
+  .cell.rt { grid-column: 1 / -1; font-size: 1rem; padding: 13px 0 11px; }
+  .hardcore .cell.rt, .hardcore .cell.mega { grid-column: span 5; }
+  .cell.mega { font-size: 1rem; }
+  .board { gap: 26px; }
+  .qbar { grid-template-columns: 1fr; }
+  .qbadge { padding: 12px; }
+}
+/* Mascotte : surgit en bas à droite à chaque changement d'écran, réagit, puis repart */
+.mascot { position: fixed; right: 10px; bottom: calc(8px + env(safe-area-inset-bottom, 0px)); width: 104px; z-index: 50; pointer-events: none; transform: translateY(150%); }
+.mascot.show { animation: m-in .6s ease-out forwards; }
+.mascot.leave { animation: m-out .35s ease-in forwards; }
+.mascot .bubble { transition: opacity .15s, transform .15s; }
+.mascot.leave .bubble { opacity: 0; transform: scale(.6); }
+.mascot svg { width: 100%; height: auto; display: block; overflow: visible; filter: drop-shadow(4px 5px 0 rgba(0,0,0,.55)); }
+.mascot .bubble { position: absolute; right: 76%; bottom: 84%; border: 3px solid #000; width: max-content; max-width: min(220px, 60vw); background: var(--pill); color: var(--red); font-family: var(--f-label); text-transform: uppercase; font-size: .78rem; letter-spacing: .03em; line-height: 1.25; padding: 10px 14px; border-radius: 16px 16px 4px 16px; box-shadow: 0 8px 20px rgba(0,0,0,.55); }
+.mascot .rig { transform-box: view-box; transform-origin: 62px 142px; }
+.mascot .arm-l { transform-box: view-box; transform-origin: 27px 88px; transition: transform .3s; }
+.mascot .arm-r { transform-box: view-box; transform-origin: 97px 88px; transition: transform .3s; }
+.mascot .brows, .mascot .pupils { transition: transform .3s; }
+.mascot .m-open, .mascot .m-sad, .mascot .m-wavy, .mascot .drunk-only { display: none; }
+.mascot.drunk .drunk-only { display: inline; }
+.mascot.drunk .lashes { display: none; }
+.mascot .sway { transform-box: view-box; transform-origin: 62px 142px; }
+.mascot.drunk .sway { animation: m-sway 1.9s ease-in-out infinite; }
+.mascot.drunk .pupils { transform: translate(2px, 4px); }
+.mascot .spark { transform-box: fill-box; transform-origin: center; transform: scale(0); }
+.mascot.show .spark { animation: m-twinkle .9s ease-in-out .2s 3; }
+.mascot.show .spark.s2 { animation-delay: .5s; }
+.mascot.show .spark.s3 { animation-delay: .8s; }
+.mascot .hic circle { transform-box: fill-box; transform-origin: center; animation: m-hic 1.8s ease-out infinite; }
+.mascot .hic .h2 { animation-delay: .5s; } .mascot .hic .h3 { animation-delay: 1s; }
+@keyframes m-sway { 0%, 100% { transform: rotate(-9deg) translateX(-2px); } 50% { transform: rotate(8deg) translateX(3px); } }
+@keyframes m-twinkle { 0%, 100% { transform: scale(0) rotate(0); } 50% { transform: scale(1.2) rotate(45deg); } }
+@keyframes m-hic { 0% { transform: translateY(6px) scale(.4); opacity: 0; } 30% { opacity: 1; } 100% { transform: translateY(-14px) scale(1); opacity: 0; } }
+@keyframes m-in { 0% { transform: translateY(150%) rotate(-200deg) scale(.5); } 60% { transform: translateY(-8%) rotate(12deg) scale(1.15, .9); } 80% { transform: translateY(0) rotate(-4deg) scale(.95, 1.06); } 100% { transform: translateY(0) rotate(0) scale(1); } }
+@keyframes m-out { 0% { transform: translateY(0) scale(1); } 30% { transform: translateY(-10%) scale(.9, 1.12); } 100% { transform: translateY(260%); visibility: hidden; } }
+@keyframes m-wave { 0%, 100% { transform: rotate(-10deg); } 50% { transform: rotate(25deg); } }
+@keyframes m-jump { 0%, 100% { transform: translateY(0) scaleY(1); } 15% { transform: translateY(2px) scaleY(.92); } 45% { transform: translateY(-16px) scaleY(1.04); } 70% { transform: translateY(0) scaleY(.96); } }
+@keyframes m-shake { 0%, 100% { transform: translateX(0) rotate(0); } 20% { transform: translateX(-4px) rotate(-4deg); } 40% { transform: translateX(4px) rotate(4deg); } 60% { transform: translateX(-3px) rotate(-3deg); } 80% { transform: translateX(3px) rotate(2deg); } }
+@keyframes m-tilt { 0%, 100% { transform: rotate(-6deg); } 50% { transform: rotate(4deg); } }
+/* Humeurs */
+.mascot.wave .arm-r { animation: m-wave .5s ease-in-out .35s 3; }
+.mascot.cheer .rig { animation: m-jump .6s ease-out .35s 3; }
+.mascot.cheer .arm-l { transform: rotate(20deg); }
+.mascot.cheer .arm-r { transform: rotate(-20deg); }
+.mascot.think .rig { animation: m-tilt 1.4s ease-in-out .3s 2; }
+.mascot.think .pupils { transform: translate(3px, -4px); }
+.mascot.think .m-smile { display: none; } .mascot.think .m-wavy { display: inline; }
+.mascot.think .arm-r { transform: rotate(-120deg); }
+.mascot.shock .rig { animation: m-shake .45s ease-in-out .35s 3; }
+.mascot.shock .brows { transform: translateY(-6px); }
+.mascot.shock .m-smile { display: none; } .mascot.shock .m-open { display: inline; }
+.mascot.shock .arm-l { transform: rotate(35deg); } .mascot.shock .arm-r { transform: rotate(-35deg); }
+.mascot.sad .m-smile { display: none; } .mascot.sad .m-sad { display: inline; }
+.mascot.sad .pupils { transform: translateY(4px); }
+.mascot.sad .brow-l { transform: rotate(-18deg); } .mascot.sad .brow-r { transform: rotate(18deg); }
+.mascot.sad .arm-l { transform: rotate(-115deg); } .mascot.sad .arm-r { transform: rotate(115deg); }
+.mascot.sad .rig { animation: m-tilt 1.6s ease-in-out .3s 1; }
+.mascot.point .arm-r { transform: rotate(-55deg); }
+.mascot .brow-l { transform-box: view-box; transform-origin: 46px 41px; transition: transform .3s; }
+.mascot .brow-r { transform-box: view-box; transform-origin: 78px 41px; transition: transform .3s; }
+@media (max-width: 640px) { .mascot { width: 82px; } .mascot .bubble { font-size: .7rem; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .cell { transition: none; }
+  .mascot, .mascot * { animation: none !important; }
+  .mascot { transform: none; opacity: 0; transition: opacity .2s; }
+  .mascot.show { opacity: 1; }
+}
+</style>
+
+<div class="wrap" id="app"></div>
+
+<div class="mascot" id="mascot" aria-hidden="true">
+  <div class="bubble" id="mascotLine"></div>
+  <svg viewBox="-6 -14 136 168">
+    <g class="sway"><g class="rig" stroke="#000" stroke-linecap="round" stroke-linejoin="round">
+      <!-- jambes et baskets -->
+      <path d="M50 118 L47 136 M74 118 L77 136" stroke-width="5" fill="none"/>
+      <path d="M33 140 Q33 131 46 132 Q56 133 57 140 Z" fill="#f4f2f0" stroke-width="4"/>
+      <path d="M67 140 Q68 133 78 132 Q91 131 91 140 Z" fill="#f4f2f0" stroke-width="4"/>
+      <path d="M38 136 L52 136 M72 136 L86 136" stroke="#e2232e" stroke-width="3"/>
+      <!-- bras en caoutchouc et gants -->
+      <g class="arm-l"><path d="M27 88 Q12 86 10 68" stroke-width="5" fill="none"/><circle cx="10" cy="64" r="8.5" fill="#f4f2f0" stroke-width="4"/><path d="M6 60 L8 64 M10 58 L11 63" stroke-width="2" fill="none"/></g>
+      <g class="arm-r"><path d="M97 88 Q112 86 114 68" stroke-width="5" fill="none"/><circle cx="114" cy="64" r="8.5" fill="#f4f2f0" stroke-width="4"/><path d="M118 60 L116 64 M114 58 L113 63" stroke-width="2" fill="none"/></g>
+      <!-- corps en haricot -->
+      <path d="M62 26 C94 26 102 52 101 82 C100 110 86 122 62 122 C38 122 22 110 22 82 C22 52 30 26 62 26 Z" fill="#e2232e" stroke-width="5"/>
+      <path d="M90 44 C99 60 100 92 88 110 C96 96 96 64 90 44 Z" fill="#b3121b" stroke="none"/>
+      <ellipse cx="40" cy="42" rx="8" ry="4.5" fill="#fff" opacity=".35" stroke="none" transform="rotate(-35 40 42)"/>
+      <!-- chapeau haut-de-forme penché -->
+      <g transform="rotate(14 66 30)">
+        <ellipse cx="66" cy="30" rx="25" ry="6" fill="#000" stroke-width="3"/>
+        <path d="M52 30 L54 2 Q66 -2 78 2 L80 30 Z" fill="#000" stroke-width="3"/>
+        <path d="M53 22 L79 22 L79.6 28 L52.6 28 Z" fill="#e2232e" stroke="none"/>
+        <path d="M58 6 L57 18" stroke="#fff" stroke-width="2.5" opacity=".5" fill="none"/>
+      </g>
+      <!-- grands yeux -->
+      <ellipse cx="48" cy="64" rx="14" ry="17" fill="#fff" stroke-width="4"/>
+      <ellipse cx="76" cy="64" rx="14" ry="17" fill="#fff" stroke-width="4"/>
+      <g class="pupils" stroke="none"><circle cx="51" cy="67" r="5.5" fill="#000"/><circle cx="73" cy="67" r="5.5" fill="#000"/><circle cx="53" cy="65" r="1.8" fill="#fff"/><circle cx="75" cy="65" r="1.8" fill="#fff"/></g>
+      <path d="M37 50 L33 45 M43 47.5 L41 42 M58 50 L62 45 M66 50 L62 45 M81 47.5 L83 42 M87 50 L91 45" stroke-width="2.5" fill="none" class="lashes"/>
+      <g class="drunk-only">
+        <path d="M34 63 C34 42 62 42 62 63 Q48 58 34 63 Z" fill="#e2232e" stroke-width="3.5"/>
+        <path d="M62 63 C62 42 90 42 90 63 Q76 58 62 63 Z" fill="#e2232e" stroke-width="3.5"/>
+        <ellipse cx="33" cy="86" rx="7" ry="4.5" fill="#ff8fa0" stroke="none" opacity=".9"/>
+        <ellipse cx="91" cy="86" rx="7" ry="4.5" fill="#ff8fa0" stroke="none" opacity=".9"/>
+      </g>
+      <g class="brows">
+        <path class="brow-l" d="M37 43 Q46 37 56 41" stroke-width="6" fill="none"/>
+        <path class="brow-r" d="M68 41 Q78 37 87 43" stroke-width="6" fill="none"/>
+      </g>
+      <!-- bouches -->
+      <g class="m-smile"><path d="M44 89 Q62 112 80 89 Z" fill="#000" stroke-width="4"/><path d="M48 91 L76 91 L74 96 L50 96 Z" fill="#fff" stroke="none"/><path d="M55 104 Q62 99 69 104 Q62 107 55 104 Z" fill="#ff6b73" stroke="none"/></g>
+      <g class="m-open"><ellipse cx="62" cy="96" rx="9" ry="11" fill="#000" stroke-width="3"/><ellipse cx="62" cy="102" rx="5" ry="3.5" fill="#ff6b73" stroke="none"/></g>
+      <path class="m-sad" d="M49 101 Q62 88 75 101" stroke-width="4.5" fill="none"/>
+      <path class="m-wavy" d="M48 96 q3.5 -4 7 0 t7 0 t7 0 t7 0" stroke-width="4" fill="none"/>
+      <!-- nœud papillon -->
+      <path d="M62 116 L48 108 L48 124 Z M62 116 L76 108 L76 124 Z" fill="#f4f2f0" stroke-width="3.5"/>
+      <circle cx="62" cy="116" r="4" fill="#000" stroke="none"/>
+    </g></g>
+    <g class="sparkles">
+      <g transform="translate(4 18)"><path class="spark" d="M0 -9 L2.5 -2.5 L9 0 L2.5 2.5 L0 9 L-2.5 2.5 L-9 0 L-2.5 -2.5 Z" fill="#f4f2f0" stroke="#000" stroke-width="2"/></g>
+      <g transform="translate(118 10)"><path class="spark s2" d="M0 -7 L2 -2 L7 0 L2 2 L0 7 L-2 2 L-7 0 L-2 -2 Z" fill="#e2232e" stroke="#000" stroke-width="2"/></g>
+      <g transform="translate(124 104)"><path class="spark s3" d="M0 -8 L2 -2 L8 0 L2 2 L0 8 L-2 2 L-8 0 L-2 -2 Z" fill="#f4f2f0" stroke="#000" stroke-width="2"/></g>
+    </g>
+    <g class="drunk-only hic" fill="#f4f2f0" stroke="#000" stroke-width="2">
+      <circle cx="104" cy="40" r="4"/><circle class="h2" cx="110" cy="30" r="5.5"/><circle class="h3" cx="104" cy="18" r="3"/>
+    </g>
+  </svg>
+</div>
+
+<script>
+/* ---------- Questions : x1, x2, x3, x4, x5, Risque Tout, Mega Risque Tout (Hardcore uniquement) ----------
+   Dans chaque série, la difficulté monte de x1 (la plus facile) jusqu'au Mega Risque Tout (la plus difficile).
+   Plusieurs séries d'une même famille sont numérotées automatiquement : Sport 1, Sport 2… */
+const THEMES = [
+  { family: "Médias", q: [
+    ["Quelle chaîne diffuse le JT de 20 h présenté par Gilles Bouleau ?", "TF1"],
+    ["Quel quotidien sportif est le plus lu en France ?", "L'Équipe"],
+    ["Quel journaliste a présenté le JT de 20 h de TF1 de 1987 à 2008 ?", "Patrick Poivre d'Arvor"],
+    ["À deux années près, quelle est la date de création de Canal+ ?", "1984"],
+    ["Quel hebdomadaire satirique paraît chaque mercredi depuis 1915 ?", "Le Canard enchaîné"],
+    ["En quelle année le premier journal télévisé a-t-il été diffusé en France ?", "1949"],
+    ["Quel journaliste a cofondé Libération avec Jean-Paul Sartre en 1973 ?", "Serge July"] ]},
+  { family: "Villes de France", q: [
+    ["Quelle ville est surnommée « la Ville rose » ?", "Toulouse"],
+    ["Quelle ville accueille chaque mois de mai un célèbre festival de cinéma ?", "Cannes"],
+    ["Quelle ville est surnommée « la capitale des Gaules » ?", "Lyon"],
+    ["Quelle ville est la préfecture du Finistère ?", "Quimper"],
+    ["Quelle ville est la préfecture de la Lozère ?", "Mende"],
+    ["Sur quelle commune se trouve le parc du Futuroscope ?", "Chasseneuil-du-Poitou"],
+    ["Quel village des Hautes-Alpes est réputé être la plus haute commune de France ?", "Saint-Véran"] ]},
+  { family: "Business", q: [
+    ["Quelle marque française a un crocodile pour logo ?", "Lacoste"],
+    ["Quel groupe français est le numéro un mondial des cosmétiques ?", "L'Oréal"],
+    ["Quel groupe possède Louis Vuitton ?", "LVMH"],
+    ["Qui a fondé l'opérateur Free ?", "Xavier Niel"],
+    ["En quelle année Apple a-t-elle été fondée ?", "1976"],
+    ["Qui a fondé la marque Zara ?", "Amancio Ortega"],
+    ["En quelle année Amazon a-t-elle été fondée ?", "1994"] ]},
+  { family: "Twitch", q: [
+    ["De quelle couleur est le logo de Twitch ?", "Violet"],
+    ["Quelle entreprise a racheté Twitch en 2014 ?", "Amazon"],
+    ["Quel créateur organise la course de voitures GP Explorer ?", "Squeezie"],
+    ["Quel streamer a cofondé le ZEvent avec Dach ?", "ZeratoR"],
+    ["Quel streamer espagnol organise La Velada del Año ?", "Ibai"],
+    ["Sous quel nom la plateforme à l'origine de Twitch était-elle connue ?", "Justin.tv"],
+    ["En quelle année Twitch a-t-il été lancé ?", "2011"] ]},
+  { family: "Célébrités", q: [
+    ["Quel acteur joue Assane Diop dans la série « Lupin » ?", "Omar Sy"],
+    ["Quel chanteur a sorti l'album « Racine carrée » ?", "Stromae"],
+    ["Quelle actrice française a reçu l'Oscar pour « La Môme » ?", "Marion Cotillard"],
+    ["Quel est le vrai nom de Johnny Hallyday ?", "Jean-Philippe Smet"],
+    ["Quel est le vrai nom du rappeur Jul ?", "Julien Mari"],
+    ["Quel est le vrai nom de Mylène Farmer ?", "Mylène Gautier"],
+    ["Quel est le vrai nom de Stromae ?", "Paul Van Haver"] ]},
+  { family: "Sport", q: [
+    ["Combien de joueurs compte une équipe de football sur le terrain ?", "11"],
+    ["Quel pays a remporté la Coupe du monde de football 2022 ?", "L'Argentine"],
+    ["Combien de fois la France a-t-elle remporté la Coupe du monde de football ?", "2 fois (1998 et 2018)"],
+    ["Quel joueur a remporté Roland-Garros 14 fois ?", "Rafael Nadal"],
+    ["Combien de temps dure un match de handball, sans prolongation ?", "60 minutes (2 × 30)"],
+    ["Combien de points vaut un essai transformé au rugby ?", "7 points"],
+    ["Quel pays a remporté la première Coupe du monde de football, en 1930 ?", "L'Uruguay"] ]},
+  { family: "Sport", q: [
+    ["Dans quel sport Teddy Riner s'illustre-t-il ?", "Le judo"],
+    ["Quel club de football joue au Parc des Princes ?", "Le Paris Saint-Germain"],
+    ["Quel nageur français a gagné 4 médailles d'or aux JO de Paris 2024 ?", "Léon Marchand"],
+    ["Combien de sets faut-il gagner pour remporter un match masculin en Grand Chelem ?", "3"],
+    ["En quelle année ont eu lieu les premiers Jeux olympiques modernes ?", "1896"],
+    ["Quel est le dernier Français à avoir gagné le Tour de France, en 1985 ?", "Bernard Hinault"],
+    ["Quelle ville organise le plus ancien marathon annuel du monde ?", "Boston"] ]},
+  { family: "Cinéma", q: [
+    ["Quel film de Dany Boon se déroule à Bergues ?", "Bienvenue chez les Ch'tis"],
+    ["Combien de films compte la saga Harry Potter ?", "8"],
+    ["Qui a réalisé « Titanic » ?", "James Cameron"],
+    ["Quel film coréen a reçu l'Oscar du meilleur film en 2020 ?", "Parasite"],
+    ["Dans « Le Seigneur des anneaux », comment s'appelle le nain de la Communauté ?", "Gimli"],
+    ["Quel réalisateur a signé « La Haine » en 1995 ?", "Mathieu Kassovitz"],
+    ["Quelle réalisatrice a reçu la Palme d'or 2021 pour « Titane » ?", "Julia Ducournau"] ]},
+  { family: "Cinéma", q: [
+    ["Comment s'appelle le cow-boy de « Toy Story » ?", "Woody"],
+    ["Quel acteur incarne Jack Sparrow ?", "Johnny Depp"],
+    ["Dans quel film Dark Vador dit-il « Je suis ton père » ?", "Star Wars : L'Empire contre-attaque"],
+    ["Quel film de 2001 suit une serveuse de Montmartre ?", "Le Fabuleux Destin d'Amélie Poulain"],
+    ["Qui a réalisé « Le Grand Bleu » ?", "Luc Besson"],
+    ["Quel film détient le record d'entrées au cinéma en France ?", "Titanic"],
+    ["Combien d'Oscars « Titanic » a-t-il remportés ?", "11"] ]},
+  { family: "Musique", q: [
+    ["Quelle chanteuse a sorti « Djadja » ?", "Aya Nakamura"],
+    ["Quel groupe britannique chante « Yellow » ?", "Coldplay"],
+    ["Quel album de Michael Jackson est le plus vendu de l'histoire ?", "Thriller"],
+    ["Qui a composé « La Marseillaise » ?", "Rouget de Lisle"],
+    ["Quel duo français était formé par Thomas Bangalter et Guy-Manuel de Homem-Christo ?", "Daft Punk"],
+    ["Sous quel nom de scène Héloïse Letissier s'est-elle fait connaître ?", "Christine and the Queens"],
+    ["En quelle année est sorti « Homework », le premier album de Daft Punk ?", "1997"] ]},
+  { family: "Géographie", q: [
+    ["Quel est le plus long fleuve de France ?", "La Loire"],
+    ["Quel est le plus grand désert chaud du monde ?", "Le Sahara"],
+    ["Quelle est la capitale de l'Australie ?", "Canberra"],
+    ["Combien de pays ont une frontière terrestre avec la France métropolitaine ?", "8"],
+    ["Quel pays a pour capitale Oulan-Bator ?", "La Mongolie"],
+    ["Quel est le plus long fleuve d'Europe ?", "La Volga"],
+    ["Quelle est la capitale du Kazakhstan ?", "Astana"] ]},
+  { family: "Histoire", q: [
+    ["En quelle année a eu lieu la prise de la Bastille ?", "1789"],
+    ["Quel roi de France était surnommé le Roi-Soleil ?", "Louis XIV"],
+    ["Qui a été le premier président de la Ve République ?", "Charles de Gaulle"],
+    ["En quelle année le mur de Berlin est-il tombé ?", "1989"],
+    ["En quelle année a eu lieu la bataille de Marignan ?", "1515"],
+    ["Combien d'années a duré la guerre de Cent Ans ?", "116 ans"],
+    ["En quelle année l'édit de Nantes a-t-il été signé ?", "1598"] ]},
+  { family: "Jeux vidéo", q: [
+    ["Quel plombier moustachu est la mascotte de Nintendo ?", "Mario"],
+    ["Quel jeu de blocs a été racheté par Microsoft en 2014 ?", "Minecraft"],
+    ["Quel éditeur français a créé la série « Assassin's Creed » ?", "Ubisoft"],
+    ["Comment s'appelle le héros de « The Legend of Zelda » ?", "Link"],
+    ["En quelle année les premiers jeux Pokémon sont-ils sortis au Japon ?", "1996"],
+    ["Qui a créé Mario ?", "Shigeru Miyamoto"],
+    ["En quelle année la première PlayStation est-elle sortie au Japon ?", "1994"] ]},
+  { family: "Cuisine", q: [
+    ["Quel est l'ingrédient principal du guacamole ?", "L'avocat"],
+    ["Quel fromage met-on dans une tartiflette ?", "Le reblochon"],
+    ["Quelle ville a donné son nom à la moutarde la plus célèbre de France ?", "Dijon"],
+    ["Quelle épice est la plus chère du monde ?", "Le safran"],
+    ["Quel légume donne sa couleur rouge au bortsch ?", "La betterave"],
+    ["Avec Toulouse et Carcassonne, quelle ville revendique le cassoulet ?", "Castelnaudary"],
+    ["Quel chef français a détenu le record mondial d'étoiles Michelin ?", "Joël Robuchon"] ]},
+  { family: "Géographie", q: [
+    ["Quel est le plus haut sommet des Alpes ?", "Le mont Blanc"],
+    ["Quel océan sépare l'Europe de l'Amérique ?", "L'océan Atlantique"],
+    ["Quel fleuve traverse Le Caire ?", "Le Nil"],
+    ["Quel détroit sépare l'Espagne du Maroc ?", "Le détroit de Gibraltar"],
+    ["Quel est le lac le plus profond du monde ?", "Le lac Baïkal"],
+    ["Quel est le plus haut sommet d'Amérique du Sud ?", "L'Aconcagua"],
+    ["Quel fleuve forme les chutes Victoria ?", "Le Zambèze"] ]},
+  { family: "Géographie", q: [
+    ["Quel pays européen a la forme d'une botte ?", "L'Italie"],
+    ["Quel est le plus grand pays du monde par la superficie ?", "La Russie"],
+    ["Quelle grande île se trouve au large du Mozambique ?", "Madagascar"],
+    ["Quelle est la plus grande île du monde ?", "Le Groenland"],
+    ["Quel pays est entièrement enclavé dans l'Afrique du Sud ?", "Le Lesotho"],
+    ["Quels sont les deux pays d'Amérique du Sud sans accès à la mer ?", "La Bolivie et le Paraguay"],
+    ["Quel pays d'Europe est doublement enclavé, entouré uniquement de pays sans littoral ?", "Le Liechtenstein"] ]},
+  { family: "Géographie", q: [
+    ["Quel fleuve traverse Paris ?", "La Seine"],
+    ["Quelle chaîne de montagnes sépare la France de l'Espagne ?", "Les Pyrénées"],
+    ["Quel fleuve traverse Bordeaux ?", "La Garonne"],
+    ["Quelle est la plus haute dune d'Europe, située en Gironde ?", "La dune du Pilat"],
+    ["Quel est le point culminant du Massif central ?", "Le puy de Sancy"],
+    ["Quel est le plus grand lac naturel entièrement français ?", "Le lac du Bourget"],
+    ["Sur quel plateau la Seine prend-elle sa source ?", "Le plateau de Langres"] ]},
+  { family: "Géographie", q: [
+    ["Quel est le plus grand océan du monde ?", "L'océan Pacifique"],
+    ["Dans quelle mer se trouve la Corse ?", "La Méditerranée"],
+    ["Quelle mer très salée borde Israël et la Jordanie ?", "La mer Morte"],
+    ["Quel détroit sépare l'Asie de l'Amérique ?", "Le détroit de Béring"],
+    ["Quelle est la fosse océanique la plus profonde du monde ?", "La fosse des Mariannes"],
+    ["Quel détroit sépare Djibouti du Yémen ?", "Le détroit de Bab-el-Mandeb"],
+    ["Quelle mer de l'Atlantique n'a aucune côte terrestre ?", "La mer des Sargasses"] ]},
+  { family: "Géographie", q: [
+    ["Sur quel continent se trouve le Brésil ?", "L'Amérique du Sud"],
+    ["Quel est le plus long fleuve d'Amérique du Sud ?", "L'Amazone"],
+    ["Dans quelle chaîne de montagnes se trouve l'Everest ?", "L'Himalaya"],
+    ["Avec le Brésil, quel pays partage les chutes d'Iguaçu ?", "L'Argentine"],
+    ["Quel désert du Chili est l'un des plus arides du monde ?", "Le désert d'Atacama"],
+    ["Quel fleuve traverse Bagdad ?", "Le Tigre"],
+    ["Quel est le plus long fleuve d'Asie ?", "Le Yangzi Jiang (Yangtsé)"] ]},
+  { family: "Capitales", q: [
+    ["Quelle est la capitale de l'Espagne ?", "Madrid"],
+    ["Quelle est la capitale du Portugal ?", "Lisbonne"],
+    ["Quelle est la capitale du Canada ?", "Ottawa"],
+    ["Quelle est la capitale de la Turquie ?", "Ankara"],
+    ["Quelle est la capitale du Nigeria ?", "Abuja"],
+    ["Quelle est la capitale de la Birmanie ?", "Naypyidaw"],
+    ["Quelle est la capitale du Bhoutan ?", "Thimphou"] ]},
+  { family: "Capitales", q: [
+    ["Quelle est la capitale de l'Italie ?", "Rome"],
+    ["Quelle est la capitale de la Russie ?", "Moscou"],
+    ["Quelle est la capitale du Brésil ?", "Brasília"],
+    ["Quelle est la capitale de la Croatie ?", "Zagreb"],
+    ["Quelle est la capitale de la Nouvelle-Zélande ?", "Wellington"],
+    ["Quelle est la capitale de la Slovénie ?", "Ljubljana"],
+    ["Quelle est la capitale du Tadjikistan ?", "Douchanbé"] ]},
+  { family: "Capitales", q: [
+    ["Quelle est la capitale du Royaume-Uni ?", "Londres"],
+    ["Quelle est la capitale de la Grèce ?", "Athènes"],
+    ["Quelle est la capitale du Maroc ?", "Rabat"],
+    ["Quelle est la capitale du Kenya ?", "Nairobi"],
+    ["Quelle est la capitale du Pakistan ?", "Islamabad"],
+    ["Quelle est la capitale du Malawi ?", "Lilongwe"],
+    ["Quelle est la capitale du Kirghizistan ?", "Bichkek"] ]},
+  { family: "Drapeaux", q: [
+    ["Quel pays a un drapeau blanc avec un disque rouge au centre ?", "Le Japon"],
+    ["Quel pays a un drapeau à bandes verticales vert, blanc, rouge, sans emblème ?", "L'Italie"],
+    ["Quel pays a un drapeau rouge avec une croix blanche décalée vers la gauche ?", "Le Danemark"],
+    ["Quel pays a un drapeau rouge avec une seule grande étoile jaune au centre ?", "Le Viêt Nam"],
+    ["Quel pays a un cèdre vert au centre de son drapeau ?", "Le Liban"],
+    ["Quel pays a un fusil kalachnikov sur son drapeau ?", "Le Mozambique"],
+    ["Quel est le seul pays dont le drapeau n'est pas rectangulaire ?", "Le Népal"] ]},
+  { family: "Drapeaux", q: [
+    ["Quel pays a un drapeau avec 50 étoiles blanches ?", "Les États-Unis"],
+    ["Quel pays a un drapeau vert avec un losange jaune et un globe bleu ?", "Le Brésil"],
+    ["Quel pays a une étoile de David bleue sur son drapeau ?", "Israël"],
+    ["Quel pays a un drapeau rouge avec un croissant et une étoile blancs ?", "La Turquie"],
+    ["Quel pays a sur son drapeau un aigle dévorant un serpent ?", "Le Mexique"],
+    ["Quel pays a un temple, Angkor Vat, sur son drapeau ?", "Le Cambodge"],
+    ["Quel pays a un oiseau de paradis sur son drapeau ?", "La Papouasie-Nouvelle-Guinée"] ]},
+  { family: "Monuments", q: [
+    ["Dans quelle ville se trouve le Colisée ?", "Rome"],
+    ["Dans quel pays se trouve le Taj Mahal ?", "L'Inde"],
+    ["Dans quelle ville se trouve la Sagrada Família ?", "Barcelone"],
+    ["Dans quel pays se trouve la cité antique de Pétra ?", "La Jordanie"],
+    ["Quel architecte a conçu la pyramide du Louvre ?", "Ieoh Ming Pei"],
+    ["Dans quelle ville espagnole se trouve le palais de l'Alhambra ?", "Grenade"],
+    ["Quel architecte danois a conçu l'Opéra de Sydney ?", "Jørn Utzon"] ]},
+  { family: "Monuments", q: [
+    ["Dans quelle ville se trouve Big Ben ?", "Londres"],
+    ["Dans quelle ville se dresse la statue du Christ Rédempteur ?", "Rio de Janeiro"],
+    ["Dans quel pays se trouve le Machu Picchu ?", "Le Pérou"],
+    ["En quelle année la tour Eiffel a-t-elle été inaugurée ?", "1889"],
+    ["Quel sculpteur français a conçu la statue de la Liberté ?", "Auguste Bartholdi"],
+    ["Dans quel pays se trouvent les ruines de Persépolis ?", "L'Iran"],
+    ["Quel empereur moghol a fait construire le Taj Mahal ?", "Shah Jahan"] ]},
+  { family: "Régions et départements", q: [
+    ["Quel est le numéro de département de Paris ?", "75"],
+    ["Combien de régions compte la France métropolitaine depuis 2016 ?", "13"],
+    ["Quelle est la préfecture de la région Bretagne ?", "Rennes"],
+    ["Quel département porte le numéro 2A ?", "La Corse-du-Sud"],
+    ["Quelle est la préfecture de l'Aveyron ?", "Rodez"],
+    ["Quelle est la préfecture des Alpes-de-Haute-Provence ?", "Digne-les-Bains"],
+    ["Quel département porte le numéro 52 ?", "La Haute-Marne"] ]},
+  { family: "Régions et départements", q: [
+    ["Dans quelle région se trouve Marseille ?", "Provence-Alpes-Côte d'Azur"],
+    ["Quelle est la préfecture de la région Hauts-de-France ?", "Lille"],
+    ["Quelle est la préfecture de la région Grand Est ?", "Strasbourg"],
+    ["Quel département porte le numéro 69 ?", "Le Rhône"],
+    ["Quel département a pour préfecture Laval ?", "La Mayenne"],
+    ["Quelle est la préfecture de la Meuse ?", "Bar-le-Duc"],
+    ["Quelle est la préfecture de Mayotte ?", "Mamoudzou"] ]},
+  { family: "Animaux", q: [
+    ["Comment appelle-t-on le petit de la vache ?", "Le veau"],
+    ["Quel est l'animal terrestre le plus rapide ?", "Le guépard"],
+    ["Quel est le seul mammifère capable de voler activement ?", "La chauve-souris"],
+    ["Comment appelle-t-on le cri du cerf en période de rut ?", "Le brame"],
+    ["Combien de cœurs possède une pieuvre ?", "3"],
+    ["Quel est le seul oiseau capable de voler en marche arrière ?", "Le colibri"],
+    ["Avec l'ornithorynque, quel mammifère pond des œufs ?", "L'échidné"] ]},
+  { family: "Animaux", q: [
+    ["Quel insecte produit le miel ?", "L'abeille"],
+    ["Quel oiseau est l'emblème de la France ?", "Le coq"],
+    ["De quelles feuilles se nourrit presque exclusivement le koala ?", "L'eucalyptus"],
+    ["Combien de poches compte l'estomac d'une vache ?", "4"],
+    ["Quel est le plus grand félin du monde ?", "Le tigre"],
+    ["À deux mois près, combien de temps dure la gestation d'une éléphante ?", "Environ 22 mois"],
+    ["Quel est le seul cervidé dont les femelles portent aussi des bois ?", "Le renne"] ]},
+  { family: "Animaux", q: [
+    ["Quel animal d'Afrique a un pelage rayé noir et blanc ?", "Le zèbre"],
+    ["Quel reptile est célèbre pour changer de couleur ?", "Le caméléon"],
+    ["Comment appelle-t-on la larve de la grenouille ?", "Le têtard"],
+    ["Quel animal tue le plus d'êtres humains chaque année ?", "Le moustique"],
+    ["À quelle famille de cétacés l'orque appartient-elle ?", "Les dauphins (delphinidés)"],
+    ["Comment appelle-t-on la femelle du sanglier ?", "La laie"],
+    ["Quel micro-animal quasi indestructible est surnommé « ourson d'eau » ?", "Le tardigrade"] ]},
+  { family: "Espace", q: [
+    ["Quelle planète est surnommée la planète rouge ?", "Mars"],
+    ["Qui a été le premier homme à marcher sur la Lune ?", "Neil Armstrong"],
+    ["Quelle est la planète la plus proche du Soleil ?", "Mercure"],
+    ["Qui a été le premier homme à voyager dans l'espace ?", "Youri Gagarine"],
+    ["Qui est le premier Français à être allé dans l'espace, en 1982 ?", "Jean-Loup Chrétien"],
+    ["Quel atterrisseur s'est posé le premier sur une comète, en 2014 ?", "Philae"],
+    ["Quel est le plus grand satellite naturel du Système solaire ?", "Ganymède"] ]},
+  { family: "Espace", q: [
+    ["Combien de planètes compte le Système solaire ?", "8"],
+    ["Quelle planète est célèbre pour ses grands anneaux ?", "Saturne"],
+    ["En quelle année l'homme a-t-il marché sur la Lune pour la première fois ?", "1969"],
+    ["Quelle est la planète la plus chaude du Système solaire ?", "Vénus"],
+    ["Quelle est l'étoile la plus proche du Soleil ?", "Proxima du Centaure"],
+    ["Quel est le plus grand volcan du Système solaire, situé sur Mars ?", "Olympus Mons"],
+    ["Quelle sonde de la NASA a survolé Pluton en 2015 ?", "New Horizons"] ]},
+  { family: "Automobile", q: [
+    ["Quelle marque automobile a un cheval cabré pour logo ?", "Ferrari"],
+    ["Quelle marque automobile française a un lion pour emblème ?", "Peugeot"],
+    ["De quel pays la marque Volvo est-elle originaire ?", "La Suède"],
+    ["De quel pays la marque Škoda est-elle originaire ?", "La République tchèque"],
+    ["Quel pilote français a été quatre fois champion du monde de F1 ?", "Alain Prost"],
+    ["Que signifient les initiales BMW, en allemand ?", "Bayerische Motoren Werke"],
+    ["En quelle année la Citroën 2 CV a-t-elle été présentée au Salon de Paris ?", "1948"] ]},
+  { family: "Histoire", q: [
+    ["Quel chef gaulois a été vaincu par Jules César à Alésia ?", "Vercingétorix"],
+    ["Quelle ville romaine a été ensevelie par l'éruption du Vésuve en 79 ?", "Pompéi"],
+    ["Quel général carthaginois a franchi les Alpes avec des éléphants ?", "Hannibal"],
+    ["Pour quel pharaon la plus grande pyramide de Gizeh a-t-elle été construite ?", "Khéops"],
+    ["Quel empereur romain s'est converti au christianisme au IVe siècle ?", "Constantin"],
+    ["En quelle année l'Empire romain d'Occident a-t-il pris fin ?", "476"],
+    ["Quel roi perse a été vaincu par Alexandre le Grand à Gaugamèles ?", "Darius III"] ]},
+  { family: "Histoire", q: [
+    ["Quelle héroïne a été brûlée vive à Rouen en 1431 ?", "Jeanne d'Arc"],
+    ["Quel souverain a été couronné empereur à Rome le jour de Noël de l'an 800 ?", "Charlemagne"],
+    ["Quel roi des Francs a été baptisé à Reims par saint Remi ?", "Clovis"],
+    ["Quel duc de Normandie a conquis l'Angleterre en 1066 ?", "Guillaume le Conquérant"],
+    ["En quelle année Constantinople est-elle tombée aux mains des Ottomans ?", "1453"],
+    ["Quel roi de France a été fait prisonnier à la bataille de Poitiers en 1356 ?", "Jean II le Bon"],
+    ["Quel pape a lancé l'appel à la première croisade, à Clermont en 1095 ?", "Urbain II"] ]},
+  { family: "Histoire", q: [
+    ["Sur quelle île Napoléon est-il mort en exil ?", "Sainte-Hélène"],
+    ["Quel navigateur a atteint l'Amérique en 1492 ?", "Christophe Colomb"],
+    ["Quelle reine de France a été guillotinée en octobre 1793 ?", "Marie-Antoinette"],
+    ["Quelle bataille de 1805 est surnommée « la bataille des Trois Empereurs » ?", "Austerlitz"],
+    ["Quel révolutionnaire a été assassiné dans sa baignoire par Charlotte Corday ?", "Jean-Paul Marat"],
+    ["Quel navigateur portugais a le premier doublé le cap de Bonne-Espérance, en 1488 ?", "Bartolomeu Dias"],
+    ["Quel traité de 1713 a mis fin à la guerre de Succession d'Espagne ?", "Le traité d'Utrecht"] ]},
+  { family: "Histoire", q: [
+    ["En quelle année a débuté la Première Guerre mondiale ?", "1914"],
+    ["Quel jour de juin 1944 a eu lieu le débarquement allié en Normandie ?", "Le 6 juin"],
+    ["Quel président américain a été assassiné à Dallas en 1963 ?", "John F. Kennedy"],
+    ["Quel révolutionnaire a pris le pouvoir à Cuba en 1959 ?", "Fidel Castro"],
+    ["Dans quelle ville de Crimée Roosevelt, Churchill et Staline se sont-ils réunis en février 1945 ?", "Yalta"],
+    ["Quel paquebot britannique, torpillé en 1915, a précipité l'opinion américaine contre l'Allemagne ?", "Le Lusitania"],
+    ["Quel maréchal allemand a signé la capitulation à Berlin le 8 mai 1945 ?", "Wilhelm Keitel"] ]},
+  { family: "Histoire", q: [
+    ["Quel pays a offert la statue de la Liberté aux États-Unis ?", "La France"],
+    ["Quel président américain a dirigé le Nord pendant la guerre de Sécession ?", "Abraham Lincoln"],
+    ["Quelle civilisation a bâti la cité du Machu Picchu ?", "Les Incas"],
+    ["Quel conquérant a fondé l'Empire mongol au XIIIe siècle ?", "Gengis Khan"],
+    ["Quel conquistador a fait tomber l'Empire aztèque ?", "Hernán Cortés"],
+    ["Qui fut le dernier empereur de Chine ?", "Puyi"],
+    ["Quel ancien esclave a mené la révolte de Saint-Domingue à la fin du XVIIIe siècle ?", "Toussaint Louverture"] ]},
+  { family: "Rois et reines", q: [
+    ["Quelle reine a régné sur le Royaume-Uni de 1952 à 2022 ?", "Élisabeth II"],
+    ["Quel roi de France a été guillotiné en janvier 1793 ?", "Louis XVI"],
+    ["Quel roi d'Angleterre a eu six épouses ?", "Henri VIII"],
+    ["Quel roi de France a été assassiné par Ravaillac en 1610 ?", "Henri IV"],
+    ["Quel fut le dernier roi à régner en France, de 1830 à 1848 ?", "Louis-Philippe"],
+    ["Quelle duchesse a épousé successivement les rois Charles VIII et Louis XII ?", "Anne de Bretagne"],
+    ["Quelle duchesse fut reine de France puis reine d'Angleterre au XIIe siècle ?", "Aliénor d'Aquitaine"] ]},
+  { family: "Politique française", q: [
+    ["Quel palais parisien est la résidence officielle du président de la République ?", "Le palais de l'Élysée"],
+    ["Combien d'années dure le mandat présidentiel depuis 2002 ?", "5 ans"],
+    ["Quel président a succédé à Charles de Gaulle en 1969 ?", "Georges Pompidou"],
+    ["Quelle femme a été la première à diriger un gouvernement en France, en 1991 ?", "Édith Cresson"],
+    ["Quel garde des Sceaux a porté l'abolition de la peine de mort en 1981 ?", "Robert Badinter"],
+    ["Quel président du Conseil a mis fin à la guerre d'Indochine en 1954 ?", "Pierre Mendès France"],
+    ["Quel président du Sénat a assuré deux fois l'intérim de la présidence, en 1969 et 1974 ?", "Alain Poher"] ]},
+  { family: "Politique française", q: [
+    ["Quelle est la devise de la République française ?", "Liberté, Égalité, Fraternité"],
+    ["Quel candidat a remporté l'élection présidentielle de 2007 ?", "Nicolas Sarkozy"],
+    ["Dans quel palais siège le Sénat ?", "Le palais du Luxembourg"],
+    ["En quelle année la Ve République a-t-elle été instaurée ?", "1958"],
+    ["Quel article de la Constitution permet de faire adopter une loi sans vote de l'Assemblée ?", "Le 49.3 (article 49, alinéa 3)"],
+    ["En quelle année les Françaises ont-elles voté pour la première fois ?", "1945"],
+    ["Quel président de la République est mort à l'Élysée en 1899 ?", "Félix Faure"] ]},
+  { family: "Mythologie", q: [
+    ["Quel dieu grec règne sur l'Olympe ?", "Zeus"],
+    ["Quel héros grec a accompli les douze travaux ?", "Héraclès (Hercule)"],
+    ["Quelle Gorgone au regard pétrifiant Persée a-t-il décapitée ?", "Méduse"],
+    ["Quel héros athénien a tué le Minotaure ?", "Thésée"],
+    ["Quel roi est condamné aux Enfers à pousser éternellement un rocher ?", "Sisyphe"],
+    ["Quelle mortelle aimée d'Éros a été soumise à des épreuves par Aphrodite ?", "Psyché"],
+    ["Quel géant aux cent yeux Héra a-t-elle chargé de garder la nymphe Io ?", "Argos (Argus)"] ]},
+  { family: "Mythologie", q: [
+    ["Quel dieu nordique manie le marteau Mjöllnir ?", "Thor"],
+    ["Selon la légende, quels jumeaux ont fondé Rome ?", "Romulus et Rémus"],
+    ["Quel est le nom romain d'Aphrodite ?", "Vénus"],
+    ["Quel dieu égyptien à tête de chacal préside à l'embaumement ?", "Anubis"],
+    ["Comment s'appelle le séjour des guerriers morts au combat dans la mythologie nordique ?", "Le Walhalla"],
+    ["Quel dieu aztèque est surnommé « le Serpent à plumes » ?", "Quetzalcoatl"],
+    ["Quel loup géant doit dévorer Odin lors du Ragnarök ?", "Fenrir"] ]},
+  { family: "Inventions", q: [
+    ["Quel inventeur américain a mis au point l'ampoule électrique à incandescence en 1879 ?", "Thomas Edison"],
+    ["Quels frères ont inventé le cinématographe ?", "Les frères Lumière"],
+    ["Quel Français a inventé une écriture en relief pour les aveugles ?", "Louis Braille"],
+    ["Qui a mis au point l'imprimerie à caractères mobiles en Europe vers 1450 ?", "Gutenberg"],
+    ["Quel physicien italien a inventé la pile électrique en 1800 ?", "Alessandro Volta"],
+    ["Quel Français a réalisé la plus ancienne photographie connue, vers 1827 ?", "Nicéphore Niépce"],
+    ["Quel ingénieur a construit en 1769 le fardier, premier véhicule automobile ?", "Nicolas-Joseph Cugnot"] ]},
+  { family: "Inventions", q: [
+    ["Quel inventeur a déposé le brevet du téléphone en 1876 ?", "Graham Bell"],
+    ["Quels frères ont réalisé le premier vol motorisé en 1903 ?", "Les frères Wright"],
+    ["Quel chimiste suédois a inventé la dynamite ?", "Alfred Nobel"],
+    ["Quel ingénieur écossais a perfectionné la machine à vapeur au XVIIIe siècle ?", "James Watt"],
+    ["Quel informaticien britannique a inventé le World Wide Web ?", "Tim Berners-Lee"],
+    ["Quel Italien a été le pionnier de la télégraphie sans fil, prix Nobel 1909 ?", "Guglielmo Marconi"],
+    ["Quel tailleur français a inventé la machine à coudre en 1830 ?", "Barthélemy Thimonnier"] ]},
+  { family: "Sciences", q: [
+    ["Quelle est la formule chimique de l'eau ?", "H2O"],
+    ["Quel gaz les plantes absorbent-elles pour la photosynthèse ?", "Le dioxyde de carbone (CO2)"],
+    ["Quel est le symbole chimique de l'or ?", "Au"],
+    ["Quel chimiste français a dit « Rien ne se perd, rien ne se crée, tout se transforme » ?", "Lavoisier"],
+    ["Quel chimiste russe a conçu le tableau périodique des éléments ?", "Dmitri Mendeleïev"],
+    ["Quel élément chimique a pour symbole W ?", "Le tungstène"],
+    ["Quel est l'élément chimique le plus abondant dans la croûte terrestre ?", "L'oxygène"] ]},
+  { family: "Sciences", q: [
+    ["Quelle étoile se trouve au centre du Système solaire ?", "Le Soleil"],
+    ["Quelle est la plus grande planète du Système solaire ?", "Jupiter"],
+    ["Quelle est la planète la plus éloignée du Soleil ?", "Neptune"],
+    ["À une minute près, combien de temps met la lumière du Soleil pour atteindre la Terre ?", "Environ 8 minutes"],
+    ["Quel est le plus grand satellite naturel de Saturne ?", "Titan"],
+    ["Quelle est la grande galaxie spirale la plus proche de la Voie lactée ?", "Andromède"],
+    ["Quel astronome a découvert la planète Uranus en 1781 ?", "William Herschel"] ]},
+  { family: "Sciences", q: [
+    ["À quelle température l'eau bout-elle au niveau de la mer, en degrés Celsius ?", "100 °C"],
+    ["Quel savant aurait eu l'idée de la gravitation en voyant tomber une pomme ?", "Isaac Newton"],
+    ["Quelle est la plus célèbre équation d'Einstein ?", "E = mc²"],
+    ["Environ à quelle vitesse la lumière se déplace-t-elle dans le vide, en km/s ?", "300 000 km/s"],
+    ["Quelle est l'unité de mesure de la résistance électrique ?", "L'ohm"],
+    ["À un degré près, à combien de degrés Celsius correspond le zéro absolu ?", "−273 °C (−273,15)"],
+    ["Quel physicien allemand a formulé le principe d'incertitude en 1927 ?", "Werner Heisenberg"] ]},
+  { family: "Sciences", q: [
+    ["Quel est le plus grand animal vivant sur Terre ?", "La baleine bleue (rorqual bleu)"],
+    ["Quel naturaliste anglais a publié « L'Origine des espèces » ?", "Charles Darwin"],
+    ["Quelle échelle est associée à la magnitude des séismes ?", "L'échelle de Richter"],
+    ["Quel scientifique a découvert la pénicilline en 1928 ?", "Alexander Fleming"],
+    ["Quel moine a découvert les lois de l'hérédité en étudiant des petits pois ?", "Gregor Mendel"],
+    ["Quel scientifique allemand a proposé la théorie de la dérive des continents ?", "Alfred Wegener"],
+    ["Quel naturaliste suédois a fondé la nomenclature binominale des espèces ?", "Carl von Linné"] ]},
+  { family: "Mathématiques", q: [
+    ["Combien de côtés possède un hexagone ?", "6"],
+    ["Combien font 7 × 8 ?", "56"],
+    ["Quelle est la racine carrée de 144 ?", "12"],
+    ["Combien font 15 % de 200 ?", "30"],
+    ["Combien font 2 puissance 10 ?", "1 024"],
+    ["Quelle est la somme de tous les entiers de 1 à 100 ?", "5 050"],
+    ["Combien de diagonales possède un octogone ?", "20"] ]},
+  { family: "Mathématiques", q: [
+    ["Quelle est la valeur de pi arrondie à deux décimales ?", "3,14"],
+    ["Combien de degrés vaut la somme des angles d'un triangle ?", "180°"],
+    ["Quel savant grec a donné son nom au théorème du triangle rectangle ?", "Pythagore"],
+    ["Quel est le plus petit nombre premier ?", "2"],
+    ["Comment appelle-t-on un polygone à douze côtés ?", "Un dodécagone"],
+    ["Quel mathématicien a laissé un « dernier théorème » démontré seulement en 1994 ?", "Pierre de Fermat"],
+    ["Combien existe-t-il de polyèdres réguliers convexes, dits solides de Platon ?", "5"] ]},
+  { family: "Corps humain", q: [
+    ["Quel organe pompe le sang dans tout le corps ?", "Le cœur"],
+    ["Combien de dents compte un adulte, dents de sagesse comprises ?", "32"],
+    ["Quel est le plus grand organe du corps humain ?", "La peau"],
+    ["Quel organe produit l'insuline ?", "Le pancréas"],
+    ["Quel est le plus petit os du corps humain ?", "L'étrier"],
+    ["Comment s'appelle l'os du talon ?", "Le calcanéum"],
+    ["Comment s'appelle la première vertèbre cervicale, qui porte le crâne ?", "L'atlas"] ]},
+  { family: "Corps humain", q: [
+    ["Combien de sens l'être humain possède-t-il traditionnellement ?", "5"],
+    ["Quels organes filtrent le sang pour produire l'urine ?", "Les reins"],
+    ["Quel groupe sanguin est appelé « donneur universel » ?", "O négatif"],
+    ["Combien d'os compte le squelette d'un adulte ?", "206"],
+    ["Quel est le muscle le plus volumineux du corps humain ?", "Le grand fessier"],
+    ["Combien de vertèbres cervicales compte la colonne vertébrale humaine ?", "7"],
+    ["Quelle valve cardiaque sépare l'oreillette gauche du ventricule gauche ?", "La valve mitrale"] ]},
+  { family: "Sport", q: [
+    ["Dans quel sport utilise-t-on un volant ?", "Le badminton"],
+    ["Combien de trous compte un parcours de golf standard ?", "18"],
+    ["Quelle est la distance officielle d'un marathon ?", "42,195 km"],
+    ["Quel boxeur américain s'appelait à l'origine Cassius Clay ?", "Mohamed Ali"],
+    ["Quelle joueuse a réussi le Grand Chelem en tennis sur une seule année, en 1988 ?", "Steffi Graf"],
+    ["Quel golfeur américain, surnommé « l'Ours blond », a remporté 18 tournois majeurs ?", "Jack Nicklaus"],
+    ["Quel boxeur français, surnommé « l'Homme orchidée », fut champion du monde en 1920 ?", "Georges Carpentier"] ]},
+  { family: "Sport", q: [
+    ["De quelle couleur est le maillot du leader du Tour de France ?", "Jaune"],
+    ["Quel coureur cycliste français était surnommé « Poupou » ?", "Raymond Poulidor"],
+    ["Quel coureur cycliste belge était surnommé « le Cannibale » ?", "Eddy Merckx"],
+    ["Quel pays a remporté la première Coupe du monde de rugby, en 1987 ?", "La Nouvelle-Zélande"],
+    ["Quel Français a été le premier à remporter cinq fois le Tour de France ?", "Jacques Anquetil"],
+    ["Quel ailier néo-zélandais a marqué quatre essais contre l'Angleterre en demi-finale du Mondial 1995 ?", "Jonah Lomu"],
+    ["Qui a remporté le tout premier Tour de France, en 1903 ?", "Maurice Garin"] ]},
+  { family: "Sport", q: [
+    ["Dans quel sport Michael Jordan est-il devenu une légende ?", "Le basket-ball"],
+    ["Sur quelle surface se joue le tournoi de Roland-Garros ?", "La terre battue"],
+    ["Quel pilote allemand a été sept fois champion du monde de Formule 1 ?", "Michael Schumacher"],
+    ["Quel joueur français a remporté Roland-Garros en 1983 ?", "Yannick Noah"],
+    ["Quel joueur suédois a remporté cinq Wimbledon consécutifs, de 1976 à 1980 ?", "Björn Borg"],
+    ["Sur quel circuit Ayrton Senna s'est-il tué en 1994 ?", "Imola"],
+    ["Quel joueur a marqué 100 points en un seul match NBA, en 1962 ?", "Wilt Chamberlain"] ]},
+  { family: "Sport", q: [
+    ["Dans quel sport joue-t-on avec des boules et un cochonnet ?", "La pétanque"],
+    ["Quel sport pratique l'équipe de France masculine surnommée « les Experts » ?", "Le handball"],
+    ["Dans quel sport le Français Martin Fourcade s'est-il illustré ?", "Le biathlon"],
+    ["Quelle course à la voile fait le tour du monde en solitaire, sans escale, depuis Les Sables-d'Olonne ?", "Le Vendée Globe"],
+    ["Quel boxeur est devenu en 1986, à 20 ans, le plus jeune champion du monde des lourds ?", "Mike Tyson"],
+    ["Au curling, comment appelle-t-on la cible circulaire dessinée sur la glace ?", "La maison"],
+    ["Quel navigateur a remporté la première Route du Rhum, en 1978 ?", "Mike Birch"] ]},
+  { family: "Football", q: [
+    ["Quel joueur français est surnommé « Zizou » ?", "Zinédine Zidane"],
+    ["Dans quel stade la France a-t-elle remporté la finale du Mondial 1998 ?", "Le Stade de France"],
+    ["Quel club français a remporté la Ligue des champions en 1993 ?", "L'Olympique de Marseille"],
+    ["Quel défenseur a marqué les deux buts français en demi-finale du Mondial 1998 ?", "Lilian Thuram"],
+    ["Quel pays a éliminé la France en demi-finale du Mondial 1982, à Séville ?", "L'Allemagne de l'Ouest (RFA)"],
+    ["Quel club a remporté le premier championnat de France professionnel, en 1933 ?", "L'Olympique lillois"],
+    ["Quel Français a marqué le tout premier but de l'histoire de la Coupe du monde, en 1930 ?", "Lucien Laurent"] ]},
+  { family: "Football", q: [
+    ["Quel joueur argentin a marqué un but de « la main de Dieu » en 1986 ?", "Diego Maradona"],
+    ["Quel pays a remporté la Coupe du monde 2014 ?", "L'Allemagne"],
+    ["Quel pays a battu la France en finale de l'Euro 2016 ?", "Le Portugal"],
+    ["Quel club anglais joue à Anfield ?", "Liverpool"],
+    ["Quel Français a marqué le but en or de la finale de l'Euro 2000 ?", "David Trezeguet"],
+    ["Quel attaquant français a marqué 13 buts lors de la Coupe du monde 1958 ?", "Just Fontaine"],
+    ["Quel club français a perdu la première finale de la Coupe des clubs champions, en 1956 ?", "Le Stade de Reims"] ]},
+  { family: "Football", q: [
+    ["Combien de minutes dure un match de football, hors prolongations ?", "90 minutes"],
+    ["Quelle carte reçoit un joueur après deux cartons jaunes dans le même match ?", "Un carton rouge"],
+    ["Quel joueur brésilien, triple champion du monde, était surnommé « le Roi » ?", "Pelé"],
+    ["Quel club italien est surnommé « la Vieille Dame » ?", "La Juventus"],
+    ["Quel club allemand a remporté trois Coupes des clubs champions d'affilée, de 1974 à 1976 ?", "Le Bayern Munich"],
+    ["Quel joueur anglais a réussi un triplé en finale de la Coupe du monde 1966 ?", "Geoff Hurst"],
+    ["Quel est le premier Français à avoir reçu le Ballon d'or, en 1958 ?", "Raymond Kopa"] ]},
+  { family: "Jeux olympiques", q: [
+    ["Combien d'anneaux figurent sur le drapeau olympique ?", "5"],
+    ["Dans quel pays se déroulaient les Jeux olympiques antiques ?", "La Grèce"],
+    ["Quel baron français est à l'origine des Jeux olympiques modernes ?", "Pierre de Coubertin"],
+    ["Quelle ville française a accueilli les JO d'hiver de 1992 ?", "Albertville"],
+    ["Quelle gymnaste roumaine a obtenu le premier 10 de l'histoire olympique, en 1976 ?", "Nadia Comăneci"],
+    ["Quelle ville a accueilli les tout premiers Jeux olympiques d'hiver, en 1924 ?", "Chamonix"],
+    ["En quelle année Paris a-t-elle accueilli les Jeux olympiques pour la première fois ?", "1900"] ]},
+  { family: "Jeux olympiques", q: [
+    ["Quel métal récompense le vainqueur d'une épreuve olympique ?", "L'or"],
+    ["Quel nageur américain a remporté huit médailles d'or aux JO de Pékin en 2008 ?", "Michael Phelps"],
+    ["Quel athlète noir américain a gagné quatre médailles d'or aux JO de Berlin en 1936 ?", "Jesse Owens"],
+    ["Quelle Française a remporté le 200 m et le 400 m aux JO d'Atlanta en 1996 ?", "Marie-José Pérec"],
+    ["Quel skieur français a remporté trois médailles d'or aux JO de Grenoble en 1968 ?", "Jean-Claude Killy"],
+    ["Dans quelle ville norvégienne se sont tenus les JO d'hiver de 1994 ?", "Lillehammer"],
+    ["Quel coureur tchécoslovaque a gagné le 5 000 m, le 10 000 m et le marathon aux JO de 1952 ?", "Emil Zátopek"] ]},
+  { family: "Cuisine", q: [
+    ["Avec quel légume fait-on les frites ?", "La pomme de terre"],
+    ["De quelle région la choucroute est-elle une spécialité ?", "L'Alsace"],
+    ["Quel fromage met-on traditionnellement sur une pizza margherita ?", "La mozzarella"],
+    ["Quelle sauce est faite de jaunes d'œufs, de beurre, d'échalote et d'estragon ?", "La béarnaise"],
+    ["Quelle pâtisserie en forme de roue a été créée en hommage à une course cycliste ?", "Le paris-brest"],
+    ["Quel chef a publié « Le Guide culinaire » en 1903 ?", "Auguste Escoffier"],
+    ["Quel chef du début du XIXe siècle, cuisinier de Talleyrand, est célèbre pour ses pièces montées ?", "Antonin Carême"] ]},
+  { family: "Cuisine", q: [
+    ["De quel pays les sushis sont-ils originaires ?", "Le Japon"],
+    ["Quelle soupe froide espagnole est à base de tomates ?", "Le gazpacho"],
+    ["Quel est l'ingrédient principal du houmous ?", "Le pois chiche"],
+    ["Avec quel poisson prépare-t-on la brandade de Nîmes ?", "La morue"],
+    ["De quelle ville bretonne le kouign-amann est-il originaire ?", "Douarnenez"],
+    ["En l'honneur de quelle cantatrice australienne un célèbre dessert aux pêches a-t-il été nommé ?", "Nellie Melba"],
+    ["Quel gastronome a écrit « Physiologie du goût », paru en 1825 ?", "Brillat-Savarin"] ]},
+  { family: "Langue française", q: [
+    ["Combien de lettres compte l'alphabet français ?", "26"],
+    ["Quel est le pluriel de « cheval » ?", "Chevaux"],
+    ["Quel est le féminin de « loup » ?", "Louve"],
+    ["Comment appelle-t-on un mot qui se lit dans les deux sens, comme « kayak » ?", "Un palindrome"],
+    ["Quel est le féminin de « canard » ?", "Cane"],
+    ["Quel est le pluriel de « aïeul » au sens d'« ancêtres » ?", "Aïeux"],
+    ["Quel est le seul mot français qui s'écrit avec un « u » accent grave ?", "Où"] ]},
+  { family: "Langue française", q: [
+    ["Quel est le contraire de « grand » ?", "Petit"],
+    ["Quel signe de ponctuation est formé d'un point surmonté d'une virgule ?", "Le point-virgule"],
+    ["Comment s'appelle le petit signe placé sous le c de « garçon » ?", "La cédille"],
+    ["Comment s'appelle le signe formé de deux points sur le e de « Noël » ?", "Le tréma"],
+    ["À quel temps est conjugué « nous chantâmes » ?", "Au passé simple"],
+    ["À quel temps et quel mode est conjugué « qu'il vînt » ?", "À l'imparfait du subjonctif"],
+    ["Comment appelle-t-on le t ajouté dans « a-t-il » pour faciliter la prononciation ?", "Le t euphonique"] ]},
+  { family: "Langue française", q: [
+    ["Comment appelle-t-on le petit du cheval ?", "Le poulain"],
+    ["Comment appelle-t-on la femelle du cerf ?", "La biche"],
+    ["Quels animaux étudie l'ornithologie ?", "Les oiseaux"],
+    ["Comment appelle-t-on un collectionneur de timbres ?", "Un philatéliste"],
+    ["Comment appelle-t-on la femelle du lièvre ?", "La hase"],
+    ["Quel verbe désigne le cri de l'éléphant ?", "Barrir"],
+    ["Comment appelle-t-on un collectionneur de capsules de champagne ?", "Un placomusophile"] ]},
+  { family: "Expressions françaises", q: [
+    ["Complétez : « Il pleut des … »", "Cordes"],
+    ["Que signifie « tomber dans les pommes » ?", "S'évanouir"],
+    ["Complétez : « Se faire rouler dans la … »", "Farine"],
+    ["Que signifie « avoir un cheveu sur la langue » ?", "Zézayer"],
+    ["Complétez : « Tirer le diable par la … »", "Queue"],
+    ["De quel jeu vient l'expression « faire chou blanc » ?", "Le jeu de quilles"],
+    ["De quelle farce médiévale vient l'expression « revenons à nos moutons » ?", "La Farce de maître Pathelin"] ]},
+  { family: "Expressions françaises", q: [
+    ["Complétez : « Faire la grasse … »", "Matinée"],
+    ["Complétez : « Poser un … », c'est-à-dire ne pas venir à un rendez-vous", "Lapin"],
+    ["Complétez : « Coûter les yeux de la … »", "Tête"],
+    ["Que signifie « peigner la girafe » ?", "Ne rien faire d'utile"],
+    ["Complétez : « Payer en monnaie de … »", "Singe"],
+    ["Dans son sens correct, que signifie « faire long feu » ?", "Échouer, rater son effet"],
+    ["Dans « avoir maille à partir », que désignait la maille ?", "Une petite pièce de monnaie"] ]},
+  { family: "Littérature", q: [
+    ["Qui a écrit « Les Misérables » ?", "Victor Hugo"],
+    ["Qui a écrit « Le Petit Prince » ?", "Antoine de Saint-Exupéry"],
+    ["Qui a écrit « Les Fleurs du mal » ?", "Charles Baudelaire"],
+    ["Qui a écrit « Le Rouge et le Noir » ?", "Stendhal"],
+    ["Quel est le vrai nom de Voltaire ?", "François-Marie Arouet"],
+    ["Quel écrivain a reçu le prix Goncourt 1933 pour « La Condition humaine » ?", "André Malraux"],
+    ["Sous quel pseudonyme Romain Gary a-t-il obtenu un second prix Goncourt ?", "Émile Ajar"] ]},
+  { family: "Littérature", q: [
+    ["Qui a écrit la fable « Le Corbeau et le Renard » ?", "Jean de La Fontaine"],
+    ["Quel mousquetaire gascon est le héros des « Trois Mousquetaires » ?", "D'Artagnan"],
+    ["Quel est le prénom de Madame Bovary ?", "Emma"],
+    ["Qui a écrit « L'Étranger » ?", "Albert Camus"],
+    ["Combien de romans compte le cycle des « Rougon-Macquart » de Zola ?", "20"],
+    ["Quel est le vrai nom de la romancière George Sand ?", "Aurore Dupin"],
+    ["Quel poète a écrit « Les Chimères », dont le sonnet « El Desdichado » ?", "Gérard de Nerval"] ]},
+  { family: "Littérature", q: [
+    ["Quel dramaturge anglais a écrit « Roméo et Juliette » ?", "William Shakespeare"],
+    ["Quel écrivain a créé le détective Sherlock Holmes ?", "Arthur Conan Doyle"],
+    ["Dans quel roman de Cervantès apparaît Sancho Panza ?", "Don Quichotte"],
+    ["Quel écrivain russe a écrit « Guerre et Paix » ?", "Léon Tolstoï"],
+    ["Quel écrivain colombien a écrit « Cent ans de solitude » ?", "Gabriel García Márquez"],
+    ["Quel écrivain irlandais a écrit « Ulysse », paru en 1922 ?", "James Joyce"],
+    ["Quel écrivain russe a écrit « Le Maître et Marguerite » ?", "Mikhaïl Boulgakov"] ]},
+  { family: "Bande dessinée", q: [
+    ["Comment s'appelle le chien de Tintin ?", "Milou"],
+    ["Quel cow-boy « tire plus vite que son ombre » ?", "Lucky Luke"],
+    ["Quel scénariste a créé Astérix avec Albert Uderzo ?", "René Goscinny"],
+    ["Quelle ville de Charente accueille chaque année un grand festival international de BD ?", "Angoulême"],
+    ["Quel dessinateur belge a créé Gaston Lagaffe ?", "André Franquin"],
+    ["Quel auteur belge a créé la série « Blake et Mortimer » ?", "Edgar P. Jacobs"],
+    ["Dans quel supplément de journal Tintin est-il apparu pour la première fois, en 1929 ?", "Le Petit Vingtième"] ]},
+  { family: "Cinéma", q: [
+    ["Dans « Les Visiteurs », quel acteur incarne Jacquouille la Fripouille ?", "Christian Clavier"],
+    ["Quel film de 2011 raconte l'amitié d'un riche tétraplégique et de son aide à domicile ?", "Intouchables"],
+    ["Quel trio comique tient les rôles principaux de « La Cité de la peur » ?", "Les Nuls"],
+    ["Qui a réalisé « La Grande Vadrouille » ?", "Gérard Oury"],
+    ["Quel film de Jeunet et Caro (1991) montre un boucher servant de la chair humaine à ses locataires ?", "Delicatessen"],
+    ["Quel film de Claude Lelouch a remporté la Palme d'or en 1966 ?", "Un homme et une femme"],
+    ["Quel film de Marcel Carné, sorti en 1945, met en scène Garance et le mime Baptiste ?", "Les Enfants du paradis"] ]},
+  { family: "Cinéma", q: [
+    ["Quel acteur incarne Forrest Gump ?", "Tom Hanks"],
+    ["Quel acteur incarne Indiana Jones ?", "Harrison Ford"],
+    ["Quel acteur joue Neo dans « Matrix » ?", "Keanu Reeves"],
+    ["Quel film d'Alfred Hitchcock se déroule en partie au motel Bates ?", "Psychose"],
+    ["Quel acteur joue Hannibal Lecter dans « Le Silence des agneaux » ?", "Anthony Hopkins"],
+    ["Quel acteur incarne Rick Blaine dans « Casablanca » ?", "Humphrey Bogart"],
+    ["Quel film muet a remporté le tout premier Oscar du meilleur film, en 1929 ?", "Les Ailes (Wings)"] ]},
+  { family: "Cinéma", q: [
+    ["« Que la Force soit avec toi » : de quelle saga vient cette réplique ?", "Star Wars"],
+    ["Quel acteur lance « Hasta la vista, baby » dans « Terminator 2 » ?", "Arnold Schwarzenegger"],
+    ["« Il s'appelle Juste Leblanc » : de quel film vient cette réplique ?", "Le Dîner de cons"],
+    ["« Les cons, ça ose tout, c'est même à ça qu'on les reconnaît » : de quel film ?", "Les Tontons flingueurs"],
+    ["« Le monde se divise en deux catégories… » : de quel western de Sergio Leone ?", "Le Bon, la Brute et le Truand"],
+    ["Dans quel film de 1938 Jean Gabin dit-il « T'as d'beaux yeux, tu sais » ?", "Le Quai des brumes"],
+    ["« Atmosphère, atmosphère… » : dans quel film Arletty prononce-t-elle cette réplique ?", "Hôtel du Nord"] ]},
+  { family: "Cinéma", q: [
+    ["Qui a réalisé « E.T. l'extra-terrestre » ?", "Steven Spielberg"],
+    ["Quel acteur français tient le rôle principal de « The Artist » ?", "Jean Dujardin"],
+    ["Qui a réalisé « Pulp Fiction » ?", "Quentin Tarantino"],
+    ["Qui a réalisé « 2001, l'Odyssée de l'espace » ?", "Stanley Kubrick"],
+    ["Quel cinéaste de la Nouvelle Vague a réalisé « Les Quatre Cents Coups » ?", "François Truffaut"],
+    ["Quel cinéaste japonais a réalisé « Les Sept Samouraïs » ?", "Akira Kurosawa"],
+    ["Quel cinéaste suédois a réalisé « Le Septième Sceau » ?", "Ingmar Bergman"] ]},
+  { family: "Séries TV", q: [
+    ["Quelle série met en scène les familles Stark et Lannister ?", "Game of Thrones"],
+    ["Dans « Friends », comment s'appelle le café où se retrouve la bande ?", "Central Perk"],
+    ["Dans « La Casa de papel », quel est le surnom du cerveau du braquage ?", "Le Professeur"],
+    ["Dans quelle ville du Nouveau-Mexique se déroule « Breaking Bad » ?", "Albuquerque"],
+    ["Quel acteur incarne Tony Soprano dans « Les Soprano » ?", "James Gandolfini"],
+    ["Quel ancien journaliste a créé la série « The Wire » (« Sur écoute ») ?", "David Simon"],
+    ["Dans « Mad Men », comment s'appelle l'agence de publicité de Don Draper au début ?", "Sterling Cooper"] ]},
+  { family: "Séries TV", q: [
+    ["Quelle série d'Alexandre Astier raconte la vie du roi Arthur ?", "Kaamelott"],
+    ["Dans quelle ville se déroule « Plus belle la vie » ?", "Marseille"],
+    ["Quel commissaire de Simenon Bruno Cremer a-t-il incarné à la télévision ?", "Maigret"],
+    ["Quel acteur a incarné le commissaire Navarro ?", "Roger Hanin"],
+    ["Quelle série de Canal+ suit des agents clandestins de la DGSE ?", "Le Bureau des légendes"],
+    ["Dans « Kaamelott », quel acteur joue Perceval ?", "Franck Pitiot"],
+    ["Quel feuilleton de 1965 avec Juliette Gréco met en scène un fantôme au Louvre ?", "Belphégor"] ]},
+  { family: "Séries TV", q: [
+    ["Quelle série Netflix suit des enfants de Hawkins face au « Monde à l'envers » ?", "Stranger Things"],
+    ["Quelle série coréenne de Netflix met en scène des jeux d'enfants mortels ?", "Squid Game"],
+    ["Dans « Prison Break », quel est le prénom du frère de Lincoln Burrows ?", "Michael"],
+    ["Quel acteur joue Walter White dans « Breaking Bad » ?", "Bryan Cranston"],
+    ["Dans « Lost », quel est le numéro du vol Oceanic qui s'écrase sur l'île ?", "815"],
+    ["Dans quelle ville fictive se trouve Wisteria Lane, dans « Desperate Housewives » ?", "Fairview"],
+    ["Quelle série britannique de 1967 a pour héros le « Numéro 6 » ?", "Le Prisonnier"] ]},
+  { family: "Dessins animés", q: [
+    ["Dans quelle ville vivent les Simpson ?", "Springfield"],
+    ["Comment s'appelle l'étoile de mer meilleure amie de Bob l'éponge ?", "Patrick"],
+    ["Comment s'appelle le chat qui court sans cesse après Titi ?", "Grosminet"],
+    ["Dans « Les Simpson », comment s'appelle le patron de la centrale nucléaire ?", "Monsieur Burns"],
+    ["Quel studio a produit le film d'animation « Shrek » ?", "DreamWorks"],
+    ["Qui a créé « Les Simpson » ?", "Matt Groening"],
+    ["Quel est le nom de jeune fille de Marge Simpson ?", "Bouvier"] ]},
+  { family: "Dessins animés", q: [
+    ["Quel est le héros de « Dragon Ball » ?", "Son Goku (Sangoku)"],
+    ["Quel Pokémon jaune accompagne Sacha ?", "Pikachu"],
+    ["Quel sport pratiquent les héros d'« Olive et Tom » ?", "Le football"],
+    ["Quel réalisateur japonais a signé « Le Voyage de Chihiro » ?", "Hayao Miyazaki"],
+    ["Comment s'appelle le pilote de Goldorak ?", "Actarus"],
+    ["Quel est le nom complet du héros de « Ken le Survivant » ?", "Kenshiro"],
+    ["Quel mangaka a créé « Les Chevaliers du Zodiaque » ?", "Masami Kurumada"] ]},
+  { family: "Dessins animés", q: [
+    ["Comment s'appellent les petits êtres bleus créés par Peyo ?", "Les Schtroumpfs"],
+    ["Quel lapin des Looney Tunes demande « Quoi de neuf, docteur ? » ?", "Bugs Bunny"],
+    ["Comment s'appelle le maître du chien Scooby-Doo ?", "Sammy"],
+    ["Comment s'appelle le chat de Gargamel ?", "Azraël"],
+    ["Comment s'appelle la nièce de l'Inspecteur Gadget en version française ?", "Sophie"],
+    ["Dans « Les Mystérieuses Cités d'or », comment s'appelle la jeune Inca amie d'Esteban ?", "Zia"],
+    ["Qui a créé la série « Il était une fois… l'Homme » ?", "Albert Barillé"] ]},
+  { family: "Disney", q: [
+    ["Comment s'appelle le lionceau héros du « Roi lion » ?", "Simba"],
+    ["Dans « La Reine des neiges », comment s'appelle le bonhomme de neige ?", "Olaf"],
+    ["Comment s'appelle le grand vizir maléfique d'« Aladdin » ?", "Jafar"],
+    ["Comment s'appelle le crabe de « La Petite Sirène » ?", "Sébastien"],
+    ["Dans « Le Livre de la jungle », comment s'appelle la panthère noire ?", "Bagheera"],
+    ["À deux ans près, en quelle année est sorti « Blanche-Neige et les Sept Nains » ?", "1937"],
+    ["Quel dessin animé sonore de 1928 a fait connaître Mickey ?", "Steamboat Willie"] ]},
+  { family: "Disney", q: [
+    ["Quel poisson-clown est recherché par son père Marin ?", "Nemo"],
+    ["Comment s'appelle la petite fée qui accompagne Peter Pan ?", "La Fée Clochette"],
+    ["Comment s'appelle le rat cuisinier de « Ratatouille » ?", "Rémy"],
+    ["Dans « La Belle et la Bête », comment s'appelle le chandelier ?", "Lumière"],
+    ["Dans « Toy Story », comment s'appelle le garçon à qui appartiennent les jouets ?", "Andy"],
+    ["Dans « Les Aristochats », comment s'appelle le chat de gouttière ?", "Thomas O'Malley"],
+    ["Quel est le prénom du frère de Walt Disney, cofondateur de la société ?", "Roy"] ]},
+  { family: "Harry Potter", q: [
+    ["Dans quelle maison de Poudlard Harry est-il envoyé ?", "Gryffondor"],
+    ["Comment s'appelle la chouette de Harry ?", "Hedwige"],
+    ["De quel quai de King's Cross part le Poudlard Express ?", "La voie 9 ¾"],
+    ["Quel est le vrai nom de Voldemort en version française ?", "Tom Elvis Jedusor"],
+    ["Quelle forme prend le Patronus d'Hermione ?", "Une loutre"],
+    ["Comment s'appelle la mère de Voldemort ?", "Mérope Gaunt"],
+    ["Quel acteur incarne Lucius Malefoy dans les films ?", "Jason Isaacs"] ]},
+  { family: "Super-héros", q: [
+    ["Quelle est l'identité civile de Superman ?", "Clark Kent"],
+    ["Quelle ville Batman protège-t-il ?", "Gotham City"],
+    ["Quel milliardaire se cache sous l'armure d'Iron Man ?", "Tony Stark"],
+    ["Comment s'appelle le majordome de Batman ?", "Alfred"],
+    ["Dans les films Marvel, de quel métal est fait le bouclier de Captain America ?", "Le vibranium"],
+    ["Quel dessinateur a cocréé Spider-Man avec Stan Lee ?", "Steve Ditko"],
+    ["À deux ans près, en quelle année Superman est-il apparu dans « Action Comics » n° 1 ?", "1938"] ]},
+  { family: "Super-héros", q: [
+    ["Quel super-héros devient un géant vert quand il est en colère ?", "Hulk"],
+    ["De quelle planète Superman est-il originaire ?", "Krypton"],
+    ["Quel acteur australien incarne Wolverine au cinéma ?", "Hugh Jackman"],
+    ["Quel acteur joue le Joker dans « The Dark Knight » (2008) ?", "Heath Ledger"],
+    ["Quel acteur incarne Superman dans le film de 1978 ?", "Christopher Reeve"],
+    ["Quelle est l'identité civile de Wonder Woman ?", "Diana Prince"],
+    ["Quel dessinateur est crédité comme créateur de Batman, avec Bill Finger ?", "Bob Kane"] ]},
+  { family: "Télévision", q: [
+    ["Quel animateur a lancé « Les 12 coups de midi » sur TF1 en 2010 ?", "Jean-Luc Reichmann"],
+    ["Quel jeu de Nagui demande de retrouver les paroles de chansons ?", "N'oubliez pas les paroles"],
+    ["Dans « Fort Boyard », comment s'appelle le vieux sage qui pose les énigmes ?", "Le Père Fouras"],
+    ["Quel animateur présentait « Le Bigdil » sur TF1 ?", "Vincent Lagaf'"],
+    ["Quel journaliste a créé et présenté le magazine de la mer « Thalassa » ?", "Georges Pernoud"],
+    ["Quelle émission littéraire Bernard Pivot a-t-il présentée de 1975 à 1990 ?", "Apostrophes"],
+    ["Quel animateur présentait le jeu « La Tête et les Jambes » ?", "Pierre Bellemare"] ]},
+  { family: "Télévision", q: [
+    ["Dans quel télé-crochet les fauteuils des coachs se retournent-ils ?", "The Voice"],
+    ["Quel animateur a lancé l'émission « Quotidien » sur TMC en 2016 ?", "Yann Barthès"],
+    ["Qui a présenté « Questions pour un champion » de 1988 à 2015 ?", "Julien Lepers"],
+    ["Quelle émission de M6 a révélé Loana en 2001 ?", "Loft Story"],
+    ["Quel animateur présentait le talk-show « Ça se discute » ?", "Jean-Luc Delarue"],
+    ["Quel animateur a présenté « Le Juste Prix » à son lancement en 1987 ?", "Patrick Roy"],
+    ["Quelle chaîne lancée en 1986 a cessé d'émettre en avril 1992 ?", "La Cinq"] ]},
+  { family: "Célébrités", q: [
+    ["Quel chanteur français est surnommé « l'idole des jeunes » ?", "Johnny Hallyday"],
+    ["Quelle chanteuse américaine est surnommée « Queen B » ?", "Beyoncé"],
+    ["Quelle chanteuse québécoise interprète « My Heart Will Go On » ?", "Céline Dion"],
+    ["Quelle actrice est la fille de Vanessa Paradis et Johnny Depp ?", "Lily-Rose Depp"],
+    ["Quel acteur est le fils du comédien Jean-Pierre Cassel ?", "Vincent Cassel"],
+    ["Dans quelle ville de l'Indre est né Gérard Depardieu ?", "Châteauroux"],
+    ["Dans quel pays est né le couturier Yves Saint Laurent ?", "L'Algérie (Oran)"] ]},
+  { family: "Célébrités", q: [
+    ["Quel entrepreneur a fondé SpaceX ?", "Elon Musk"],
+    ["Quel footballeur portugais est surnommé « CR7 » ?", "Cristiano Ronaldo"],
+    ["Quel acteur a reçu l'Oscar pour « The Revenant » ?", "Leonardo DiCaprio"],
+    ["Quel ancien footballeur anglais a épousé Victoria, ex-Spice Girl ?", "David Beckham"],
+    ["Laetitia Casta a servi de modèle au buste de quel symbole de la République ?", "Marianne"],
+    ["Quel est le prénom de la fille aînée de Kim Kardashian et Kanye West ?", "North"],
+    ["Quel acteur donne la réplique à Brigitte Bardot dans « Le Mépris » de Godard ?", "Michel Piccoli"] ]},
+  { family: "Années 80", q: [
+    ["Quel casse-tête cubique aux faces colorées a fait fureur au début des années 80 ?", "Le Rubik's Cube"],
+    ["Quelle console portable Nintendo est sortie en 1989 ?", "La Game Boy"],
+    ["Quel chanteur a popularisé le moonwalk en 1983 ?", "Michael Jackson"],
+    ["Quel groupe norvégien chante « Take On Me » ?", "A-ha"],
+    ["Quelle chaîne musicale américaine a été lancée en 1981 ?", "MTV"],
+    ["Quelle princesse a chanté « Ouragan » en 1986 ?", "Stéphanie de Monaco"],
+    ["Quel groupe français a chanté « Les Démons de minuit » en 1986 ?", "Images"] ]},
+  { family: "Musique", q: [
+    ["Quelle chanteuse a interprété « Non, je ne regrette rien » ?", "Édith Piaf"],
+    ["Quel chanteur belge a écrit et chanté « Ne me quitte pas » ?", "Jacques Brel"],
+    ["Quel chanteur sétois a écrit « La Mauvaise Réputation » ?", "Georges Brassens"],
+    ["Avec qui Serge Gainsbourg chante-t-il « Je t'aime… moi non plus » dans la version de 1969 ?", "Jane Birkin"],
+    ["Sous quel nom de scène Claude Moine est-il connu ?", "Eddy Mitchell"],
+    ["Dans quel archipel Jacques Brel est-il enterré ?", "Les Marquises"],
+    ["Quel est le vrai nom de la chanteuse Barbara ?", "Monique Serf"] ]},
+  { family: "Musique", q: [
+    ["Quel groupe de Liverpool comptait John Lennon et Paul McCartney ?", "Les Beatles"],
+    ["Qui était le chanteur du groupe Queen ?", "Freddie Mercury"],
+    ["Quel groupe de Kurt Cobain a sorti « Smells Like Teen Spirit » ?", "Nirvana"],
+    ["De quel pays est originaire le groupe AC/DC ?", "L'Australie"],
+    ["Quel album de Pink Floyd a pour pochette un prisme qui décompose la lumière ?", "The Dark Side of the Moon"],
+    ["Quel était le vrai nom de Freddie Mercury ?", "Farrokh Bulsara"],
+    ["Sous quel nom le groupe de John Lennon, futur Beatles, jouait-il en 1957 ?", "The Quarrymen"] ]},
+  { family: "Musique", q: [
+    ["Quelle chanteuse américaine a sorti « Shake It Off » en 2014 ?", "Taylor Swift"],
+    ["Quelle chanteuse est surnommée « la reine de la pop » ?", "Madonna"],
+    ["De quel pays la chanteuse Shakira est-elle originaire ?", "La Colombie"],
+    ["De quelle île des Caraïbes la chanteuse Rihanna est-elle originaire ?", "La Barbade"],
+    ["Quel est le vrai nom de Lady Gaga ?", "Stefani Germanotta"],
+    ["Quel tube de « Bodyguard », chanté par Whitney Houston, a été écrit par Dolly Parton ?", "I Will Always Love You"],
+    ["Quel est le vrai nom d'Elton John ?", "Reginald Dwight"] ]},
+  { family: "Musique", q: [
+    ["Quel compositeur autrichien, enfant prodige, a écrit « La Flûte enchantée » ?", "Mozart"],
+    ["Quel compositeur allemand a écrit la « Lettre à Élise » ?", "Beethoven"],
+    ["Quel compositeur italien a écrit « Les Quatre Saisons » ?", "Vivaldi"],
+    ["Quel compositeur français a écrit le « Boléro » ?", "Maurice Ravel"],
+    ["Quel compositeur français a écrit l'opéra « Carmen » ?", "Georges Bizet"],
+    ["Quel compositeur français a écrit les « Gymnopédies » ?", "Erik Satie"],
+    ["Quel compositeur italien a écrit l'opéra « Le Barbier de Séville », créé en 1816 ?", "Rossini"] ]},
+  { family: "Rap français", q: [
+    ["Quel rappeur caennais a sorti « Basique » en 2017 ?", "Orelsan"],
+    ["Quel rappeur est surnommé « le Duc de Boulogne » ?", "Booba"],
+    ["Quel groupe de rap formaient JoeyStarr et Kool Shen ?", "Suprême NTM"],
+    ["Quel groupe marseillais a sorti l'album « L'École du micro d'argent » en 1997 ?", "IAM"],
+    ["Quel est le vrai nom d'Orelsan ?", "Aurélien Cotentin"],
+    ["Dans quelle capitale africaine MC Solaar est-il né ?", "Dakar"],
+    ["Quel est le titre du premier album d'IAM, sorti en 1991 ?", "… de la planète Mars"] ]},
+  { family: "Rap français", q: [
+    ["Quel rappeur, ancien de la Sexion d'Assaut, a sorti « Bella » en 2013 ?", "Gims"],
+    ["Quel duo de frères rappeurs a sorti « Au DD » en 2019 ?", "PNL"],
+    ["Quel rappeur a sorti « Lettre à une femme » en 2019 ?", "Ninho"],
+    ["Quel rappeur belge a sorti l'album « Ipséité » en 2017 ?", "Damso"],
+    ["Avec quel rappeur Orelsan forme-t-il le duo Casseurs Flowters ?", "Gringe"],
+    ["Dans quelle cité de Corbeil-Essonnes ont grandi les frères de PNL ?", "Les Tarterêts"],
+    ["Quel est le titre du premier album solo de Booba, sorti en 2002 ?", "Temps mort"] ]},
+  { family: "Jeux vidéo", q: [
+    ["Quel personnage jaune et rond mange des pac-gommes dans un labyrinthe ?", "Pac-Man"],
+    ["Quel hérisson bleu est la mascotte de Sega ?", "Sonic"],
+    ["Comment s'appelle l'aventurière archéologue de « Tomb Raider » ?", "Lara Croft"],
+    ["Dans quelle ville fictive se déroule « GTA V » ?", "Los Santos"],
+    ["Quel Pokémon porte le numéro 1 du Pokédex ?", "Bulbizarre"],
+    ["Quel studio polonais a développé « The Witcher 3 » ?", "CD Projekt (Red)"],
+    ["Quel ingénieur soviétique a créé Tetris ?", "Alexeï Pajitnov"] ]},
+  { family: "Jeux vidéo", q: [
+    ["Quel jeu de battle royale d'Epic Games est sorti en 2017 ?", "Fortnite"],
+    ["Comment s'appelle le frère de Mario ?", "Luigi"],
+    ["Quelle console hybride Nintendo a-t-il lancée en 2017 ?", "La Nintendo Switch"],
+    ["Quelle série d'EA Sports a été renommée « EA Sports FC » ?", "FIFA"],
+    ["Comment s'appelle le royaume de « The Legend of Zelda » ?", "Hyrule"],
+    ["Quel est le grand méchant de « Final Fantasy VII » ?", "Sephiroth"],
+    ["Quel nom portait Mario dans « Donkey Kong » en 1981 ?", "Jumpman"] ]},
+  { family: "Internet et réseaux sociaux", q: [
+    ["Quel réseau social avait un oiseau bleu pour logo avant de devenir X ?", "Twitter"],
+    ["Qui a fondé Facebook ?", "Mark Zuckerberg"],
+    ["Quelle entreprise a racheté YouTube en 2006 ?", "Google"],
+    ["Quelle application s'appelle Douyin en Chine ?", "TikTok"],
+    ["En quelle année Facebook a-t-il été créé ?", "2004"],
+    ["Quel est le titre de la toute première vidéo publiée sur YouTube ?", "Me at the zoo"],
+    ["Qui a publié le tout premier tweet de l'histoire, en 2006 ?", "Jack Dorsey"] ]},
+  { family: "Internet et réseaux sociaux", q: [
+    ["Quel site de vidéos a pour logo un bouton lecture rouge ?", "YouTube"],
+    ["Comment s'appelle l'encyclopédie en ligne gratuite et collaborative ?", "Wikipédia"],
+    ["Quel réseau social professionnel appartient à Microsoft ?", "LinkedIn"],
+    ["Que signifie « www » dans les adresses web ?", "World Wide Web"],
+    ["Quel navigateur web a pour logo un renard enroulé autour d'un globe ?", "Firefox"],
+    ["Quel réseau américain, créé en 1969, est l'ancêtre d'Internet ?", "Arpanet"],
+    ["Sous quel nom le moteur de recherche Google est-il né en 1996 ?", "BackRub"] ]},
+  { family: "Technologie", q: [
+    ["Quelle entreprise fabrique l'iPhone ?", "Apple"],
+    ["Qui a cofondé Microsoft avec Paul Allen ?", "Bill Gates"],
+    ["En quelle année le premier iPhone a-t-il été présenté ?", "2007"],
+    ["Que signifie le sigle « USB » ?", "Universal Serial Bus"],
+    ["Quel informaticien finlandais a créé le noyau Linux ?", "Linus Torvalds"],
+    ["Quelle « loi » prédit le doublement régulier du nombre de transistors des puces ?", "La loi de Moore"],
+    ["Quelle mathématicienne britannique est considérée comme la première programmeuse ?", "Ada Lovelace"] ]},
+  { family: "Technologie", q: [
+    ["Comment s'appelle l'assistant vocal d'Apple ?", "Siri"],
+    ["Quel système d'exploitation mobile a été développé par Google ?", "Android"],
+    ["Quel service télématique français a été définitivement arrêté en 2012 ?", "Le Minitel"],
+    ["Combien de bits y a-t-il dans un octet ?", "8"],
+    ["Quelle entreprise fabrique les cartes graphiques GeForce ?", "Nvidia"],
+    ["Quel mathématicien britannique a imaginé un test pour juger de l'intelligence d'une machine ?", "Alan Turing"],
+    ["Que signifie le sigle « HTML » ?", "HyperText Markup Language"] ]},
+  { family: "Marques et logos", q: [
+    ["Quelle marque de sport a pour logo une virgule ?", "Nike"],
+    ["Quelle marque de sport a pour logo un félin bondissant ?", "Puma"],
+    ["Quel réseau social a pour logo un fantôme blanc sur fond jaune ?", "Snapchat"],
+    ["Comment s'appelle le bonhomme blanc de la marque Michelin ?", "Bibendum"],
+    ["Quelle maison de luxe italienne a pour logo une tête de Méduse ?", "Versace"],
+    ["Quelle marque de jouets tire son nom de mots danois signifiant « joue bien » ?", "Lego"],
+    ["Quel constructeur automobile japonais a pour logo les étoiles des Pléiades ?", "Subaru"] ]},
+  { family: "Marques et logos", q: [
+    ["Quelle chaîne de restauration rapide a pour logo un grand M jaune ?", "McDonald's"],
+    ["Quelle marque de sport a pour emblème trois bandes ?", "Adidas"],
+    ["Quel constructeur automobile a pour logo un double chevron ?", "Citroën"],
+    ["Quelle maison de couture a pour logo deux C entrelacés ?", "Chanel"],
+    ["Quel animal figure sur le logo de Lamborghini ?", "Un taureau"],
+    ["Quel animal, à côté d'une croix rouge, figure sur le logo d'Alfa Romeo ?", "Un serpent"],
+    ["Que signifiait à l'origine le sigle « Fnac » ?", "Fédération nationale d'achats des cadres"] ]},
+  { family: "Années 90", q: [
+    ["Quelle série culte suit six amis à New York de 1994 à 2004 ?", "Friends"],
+    ["Quel groupe britannique comptait Posh, Baby, Scary, Sporty et Ginger ?", "Les Spice Girls"],
+    ["Quel animal virtuel japonais, sur porte-clés, a fait fureur en 1997 ?", "Le Tamagotchi"],
+    ["Quel boys band français chantait « Partir un jour » ?", "2Be3"],
+    ["Quel groupe toulousain a chanté « Tomber la chemise » ?", "Zebda"],
+    ["Dans « Friends », quel est le nom de famille de Rachel ?", "Green"],
+    ["Quelle entreprise japonaise a commercialisé le Tamagotchi ?", "Bandai"] ]},
+  { family: "Années 90", q: [
+    ["Quel dessin animé japonais suit les aventures de Sangoku ?", "Dragon Ball"],
+    ["Quelle série suit des sauveteurs en mer avec Pamela Anderson ?", "Alerte à Malibu"],
+    ["Quel groupe danois chantait « Barbie Girl » en 1997 ?", "Aqua"],
+    ["Comment s'appelait la brebis, premier mammifère cloné, née en 1996 ?", "Dolly"],
+    ["Quel duo présentait l'émission « Hit Machine » sur M6 ?", "Charly et Lulu"],
+    ["Dans « X-Files », quel est le prénom de l'agent Scully ?", "Dana"],
+    ["Comment s'appelle le lycée de la série « Sauvés par le gong » ?", "Bayside"] ]},
+  { family: "Années 2000", q: [
+    ["Quelle émission de TF1, lancée en 2001, réunissait des élèves chanteurs dans un château ?", "Star Academy"],
+    ["Quelle chanteuse a sorti « Single Ladies » en 2008 ?", "Beyoncé"],
+    ["Quelle série suit des rescapés d'un crash d'avion sur une île mystérieuse ?", "Lost"],
+    ["Quel téléphone Nokia, sorti en 2000, est réputé indestructible ?", "Le Nokia 3310"],
+    ["Qui a remporté la première saison de « Star Academy » ?", "Jenifer"],
+    ["Quel duo a remporté la première saison de « Loft Story » en 2001 ?", "Loana et Christophe"],
+    ["Qui a remporté la première saison de « Nouvelle Star » en 2003 ?", "Jonatan Cerrada"] ]},
+  { family: "Années 2000", q: [
+    ["Quel ogre vert a fait ses débuts au cinéma en 2001 ?", "Shrek"],
+    ["Quelle chanteuse américaine a sorti « Toxic » en 2004 ?", "Britney Spears"],
+    ["Quel baladeur numérique Apple a-t-il lancé en 2001 ?", "L'iPod"],
+    ["Quelle série suit Carrie Bradshaw et ses trois amies à New York ?", "Sex and the City"],
+    ["Quel groupe de rock a sorti « Seven Nation Army » en 2003 ?", "The White Stripes"],
+    ["Quel réseau social, prisé des musiciens, a été cofondé par Tom Anderson ?", "MySpace"],
+    ["Qui a cofondé Wikipédia avec Larry Sanger en 2001 ?", "Jimmy Wales"] ]},
+  { family: "Art et peinture", q: [
+    ["Qui a peint « La Joconde » ?", "Léonard de Vinci"],
+    ["Quel peintre néerlandais s'est tranché l'oreille ?", "Vincent Van Gogh"],
+    ["Qui a peint « Guernica » ?", "Pablo Picasso"],
+    ["Quel tableau de Monet a donné son nom à l'impressionnisme ?", "Impression, soleil levant"],
+    ["Quel peintre norvégien a peint « Le Cri » ?", "Edvard Munch"],
+    ["Qui a peint « Le Radeau de la Méduse » ?", "Théodore Géricault"],
+    ["Quel peintre a réalisé « L'Origine du monde » ?", "Gustave Courbet"] ]},
+  { family: "Art et peinture", q: [
+    ["Quel peintre espagnol moustachu est célèbre pour ses montres molles ?", "Salvador Dalí"],
+    ["Qui a sculpté « Le Penseur » ?", "Auguste Rodin"],
+    ["Qui a peint le plafond de la chapelle Sixtine ?", "Michel-Ange"],
+    ["Qui a peint « La Liberté guidant le peuple » ?", "Eugène Delacroix"],
+    ["Quel peintre néerlandais a réalisé « La Jeune Fille à la perle » ?", "Johannes Vermeer"],
+    ["Quel peintre espagnol a réalisé « Les Ménines » ?", "Diego Vélasquez"],
+    ["Quel peintre a réalisé le triptyque « Le Jardin des délices » ?", "Jérôme Bosch"] ]},
+];
+// Nom affiché : la famille, suivie d'un numéro si elle a plusieurs séries
+const NAMES = THEMES.map((t, i) => {
+  const same = THEMES.filter(x => x.family === t.family);
+  return same.length > 1 ? `${t.family} ${THEMES.slice(0, i + 1).filter(x => x.family === t.family).length}` : t.family;
+});
+const SLOTS_CLASSIC = [1, 2, 3, 4, 5, "RT"];
+const SLOTS_HARD = [1, 2, 3, 4, 5, "RT", "MEGA"];
+
+/* ---------- Questions cadeaux ----------
+   Environ un thème sur cinq cache, à la place de son Risque Tout ou de son Mega Risque Tout,
+   une question d'une facilité absurde, souvent hors thème. Tirage refait à chaque partie. */
+const EASY = [
+  ["De quelle couleur est le cheval blanc d'Henri IV ?", "Blanc"],
+  ["Combien font 2 + 2 ?", "4"],
+  ["Quelle est la capitale de la France ?", "Paris"],
+  ["Combien y a-t-il de jours dans une semaine ?", "7"],
+  ["Quel animal fait « miaou » ?", "Le chat"],
+  ["Combien de doigts compte une main ?", "5"],
+  ["Dans quel pays se trouve la tour Eiffel ?", "La France"],
+  ["Quel est le premier mois de l'année ?", "Janvier"],
+  ["Combien de roues a un vélo ?", "2"],
+  ["De quelle couleur est une banane mûre ?", "Jaune"],
+  ["Quel est le contraire de « froid » ?", "Chaud"],
+  ["Combien y a-t-il de saisons dans une année ?", "4"],
+  ["Quelle lettre vient juste après A dans l'alphabet ?", "B"],
+  ["Dans quoi vivent les poissons ?", "Dans l'eau"],
+  ["Comment s'appelle le jeu auquel vous jouez ?", "Le Risque Tout"],
+  ["Combien font 10 − 1 ?", "9"],
+  ["Quel animal pond les œufs que l'on mange au petit-déjeuner ?", "La poule"],
+  ["Le soleil se lève-t-il le matin ou le soir ?", "Le matin"],
+];
+const EASY_RATE = 0.2;
+
+/* ---------- État ---------- */
+const STORE = "risque-tout-partie";
+let S = fresh();
+// Valeurs réglables : points (Classique) ou gorgées (Hardcore) des cases x1 à x5, culs secs du Risque Tout
+function defaultCfg() { return { pts: [1, 2, 3, 4, 5], sips: [1, 2, 3, 4, 5], shots: 1 }; }
+function fresh() {
+  return { screen: "home", mode: null, players: ["Joueur 1", "Joueur 2"], themes: [], bonus: {}, cfg: defaultCfg(), used: {}, scores: [], drink: [], turn: 0, current: null, result: null, confirmEnd: false, edit: null, picker: false, adding: false };
+}
+// Historique des thèmes joués, gardé d'une partie à l'autre sur ce téléphone
+const PLAYED = "risque-tout-joues";
+let played = (() => { try { return JSON.parse(localStorage.getItem(PLAYED)) || { list: [], show: true }; } catch (e) { return { list: [], show: true }; } })();
+function savePlayed() { try { localStorage.setItem(PLAYED, JSON.stringify(played)); } catch (e) {} }
+const isPlayed = i => played.list.includes(NAMES[i]);
+const markPlayed = i => { if (!isPlayed(i)) { played.list.push(NAMES[i]); savePlayed(); } };
+const showPlayed = i => played.show && isPlayed(i);
+function save() { try { localStorage.setItem(STORE, JSON.stringify(S)); } catch (e) {} }
+function load() { try { const v = JSON.parse(localStorage.getItem(STORE)); if (v && v.screen) return v; } catch (e) {} return null; }
+
+const app = document.getElementById("app");
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const hard = () => S.mode === "hardcore";
+const slots = () => hard() ? SLOTS_HARD : SLOTS_CLASSIC;
+const plural = (n, one, many) => `${n} ${Math.abs(n) > 1 ? many : one}`;
+const sips = n => plural(n, "gorgée", "gorgées");
+const shots = n => plural(n, "cul sec", "culs secs");
+const cfg = () => S.cfg || (S.cfg = defaultCfg());
+const value = m => (hard() ? cfg().sips : cfg().pts)[m - 1];
+const pts = n => plural(n, "point", "points");
+const drinkText = d => (!d.s && !d.c) ? "rien à boire" : [d.s ? sips(d.s) : "", d.c ? shots(d.c) : ""].filter(Boolean).join(" et ");
+const available = () => THEMES.map((_, i) => i).filter(i => !S.themes.includes(i));
+const allUsed = () => S.themes.every(t => slots().every((_, c) => S.used[t + "-" + c]));
+
+function go(screen) { S.screen = screen; S.confirmEnd = false; S.edit = null; S.picker = false; S.adding = false; save(); render(); window.scrollTo(0, 0); }
+function refresh() { save(); render(); }
+
+/* ---------- Écrans ---------- */
+function render() {
+  const fn = S.rules ? rules : ({ home, players, themes, board, question, verdict, end }[S.screen] || home);
+  app.innerHTML = fn();
+  bind();
+  react();
+}
+
+/* ---------- Mascotte ---------- */
+const mascotEl = document.getElementById("mascot");
+const mascotLine = document.getElementById("mascotLine");
+let mascotKey = null, mascotTimer = null;
+
+// Humeur et réplique selon l'écran affiché
+function mood() {
+  if (S.rules) return ["point", "Le maître du jeu a toujours raison."];
+  const name = S.players[S.turn] || "";
+  switch (S.screen) {
+    case "home": return ["wave", "Prêts à tout risquer ?"];
+    case "players": return ["wave", "Qui ose jouer ?"];
+    case "themes": return ["think", "Choisissez bien vos thèmes…"];
+    case "board": return ["wave", `À toi, ${name} !`];
+    case "question": {
+      const { t, c } = S.current, m = slots()[c], b = (S.bonus || {})[t];
+      if (b && b[0] === c) return ["cheer", "Hé hé… celle-là, c'est cadeau !"];
+      if (m === "MEGA") return ["shock", "Le MEGA ?! T'es pas sérieux…"];
+      if (m === "RT") return ["shock", "Tu risques tout ?!"];
+      return ["think", "Réfléchis bien…"];
+    }
+    case "verdict": {
+      const r = S.result;
+      if (r.ok) return ["cheer", r.m === "MEGA" ? "Ardoise effacée !" : r.m === "RT" ? (hard() ? "Le culot paie !" : "Score doublé !") : "Bravo !"];
+      return ["sad", r.m === "MEGA" ? "Ça va piquer…" : r.m === "RT" ? (hard() ? "Cul sec !" : "Aïe… tout perdu !") : hard() ? "Santé !" : "Raté !"];
+    }
+    case "end": return ["cheer", "Quelle partie !"];
+  }
+  return ["wave", ""];
+}
+
+// En Hardcore, la mascotte a un peu trop bu
+function slur(line) {
+  return line.replace(/s([aeiouyéèêà])/g, "ch$1").replace(/S([aeiouyéèêà])/g, "Ch$1") + " *hic*";
+}
+
+function react() {
+  const key = S.rules ? "rules" : [S.screen, S.turn, S.current ? S.current.t + "-" + S.current.c : ""].join("|");
+  if (key === mascotKey) return;
+  mascotKey = key;
+  const [m, line] = mood();
+  clearTimeout(mascotTimer);
+  const drunk = hard() && S.screen !== "home";
+  mascotLine.textContent = drunk && line ? slur(line) : line;
+  mascotLine.hidden = !line;
+  mascotEl.className = "mascot " + m + (drunk ? " drunk" : "");
+  void mascotEl.offsetWidth; // relance l'animation d'entrée
+  mascotEl.classList.add("show");
+  mascotTimer = setTimeout(() => {
+    mascotEl.classList.replace("show", "leave");
+  }, 2600);
+}
+
+function rules() {
+  return `<section class="screen">
+    <div class="top-line">
+      <h2>Les règles</h2>
+      <button class="btn small" data-act="closeRules">Fermer</button>
+    </div>
+    <div class="rules">
+      <div class="rule-block">
+        <span class="eyebrow">Le principe</span>
+        <p>Un maître du jeu tient le téléphone et arbitre la partie. Il ne joue pas : il lit les questions, affiche la réponse, décide si elle est bonne et veille au bon déroulement du jeu.</p>
+        <p>Les joueurs jouent chacun leur tour. À son tour, un joueur annonce une case du plateau : un thème et un niveau. Le maître du jeu lit la question, le joueur répond à voix haute, puis le maître du jeu valide ou non.</p>
+        <p>Chaque thème a ses questions de x1, la plus facile, à x5. Viennent ensuite le Risque Tout puis, en Hardcore, le Mega Risque Tout, les plus difficiles.</p>
+      </div>
+      <div class="rule-block">
+        <span class="eyebrow">Mode Classique · des points</span>
+        <table>
+          <thead><tr><th>Case</th><th>Bonne réponse</th><th>Mauvaise réponse</th></tr></thead>
+          <tbody>
+            <tr><td>x1 à x5</td><td>+1 à +5 points</td><td>−1 à −5 points</td></tr>
+            <tr><td>Risque Tout</td><td>score doublé</td><td>score remis à 0</td></tr>
+          </tbody>
+        </table>
+        <p>Valeurs par défaut : x1 = 1 point… x5 = 5 points. Elles se règlent avant la partie, dans « Valeurs des questions ». Le score peut être négatif. Un score de 0 doublé reste à 0. Le plus haut score gagne.</p>
+      </div>
+      <div class="rule-block">
+        <span class="eyebrow">Mode Hardcore · jeu à boire</span>
+        <table>
+          <thead><tr><th>Case</th><th>Bonne réponse</th><th>Mauvaise réponse</th></tr></thead>
+          <tbody>
+            <tr><td>x1 à x5</td><td>tu distribues 1 à 5 gorgées</td><td>tu bois 1 à 5 gorgées</td></tr>
+            <tr><td>Risque Tout</td><td>tu fais boire un cul sec</td><td>un cul sec pour toi</td></tr>
+            <tr><td>Mega Risque Tout</td><td>ton reste à boire est effacé</td><td>ton reste à boire est doublé</td></tr>
+          </tbody>
+        </table>
+        <p>Valeurs par défaut : x1 = 1 gorgée… x5 = 5 gorgées, et 1 cul sec pour le Risque Tout. Elles se règlent avant la partie, dans « Valeurs des questions ». Il n'y a pas de points : chaque joueur a un « reste à boire » en gorgées et en culs secs. Une fois bu, on le retire en touchant son nom.</p>
+      </div>
+      <div class="rule-block">
+        <span class="eyebrow">Le petit secret</span>
+        <p>De temps en temps, un Risque Tout ou un Mega Risque Tout cache une question d'une facilité absurde. Rien ne permet de savoir lesquels. Celui qui ose tout risquer peut tomber dessus.</p>
+      </div>
+      <div class="rule-block">
+        <span class="eyebrow">En cours de partie</span>
+        <p>Le maître du jeu touche le nom d'un joueur pour corriger son score ou son reste à boire. Il peut ajouter des thèmes à tout moment sous le plateau. « Fin de partie » arrête la partie et affiche le bilan.</p>
+      </div>
+      <p class="fine">Mode Hardcore réservé aux majeurs. L'abus d'alcool est dangereux pour la santé, à consommer avec modération.</p>
+    </div>
+    <div class="actions"><button class="btn primary" data-act="closeRules">Retour au jeu</button></div>
+  </section>`;
+}
+
+function home() {
+  const saved = load();
+  const resume = saved && ["board", "question", "verdict"].includes(saved.screen);
+  return `<section class="screen">
+    <div class="stack">
+      <span class="eyebrow">Quiz entre amis</span>
+      <h1>Le Risque <span>Tout</span></h1>
+      <p class="lead">Choisissez une question de x1 à x5 selon la difficulté. Bonne réponse, vous gagnez. Mauvaise réponse, vous perdez. Et si vous osez le Risque Tout…</p>
+    </div>
+    <div class="modes">
+      <button class="mode" data-mode="classique">
+        <span class="tag">Points</span>
+        <span class="name">Classique</span>
+        <ul>
+          <li>Bonne réponse : + les points de la case</li>
+          <li>Mauvaise réponse : − les points de la case</li>
+          <li>Risque Tout : score doublé, ou remis à zéro</li>
+        </ul>
+      </button>
+      <button class="mode hard" data-mode="hardcore">
+        <span class="tag">Jeu à boire</span>
+        <span class="name">Hardcore</span>
+        <ul>
+          <li>Bonne réponse : vous distribuez les gorgées</li>
+          <li>Mauvaise réponse : elles s'ajoutent à votre reste à boire</li>
+          <li>Risque Tout : un cul sec, donné ou reçu</li>
+          <li>Mega Risque Tout : reste à boire effacé, ou doublé</li>
+        </ul>
+      </button>
+    </div>
+    <div class="actions">
+      ${resume ? `<button class="btn ghost" data-act="resume">Reprendre la partie en cours</button>` : ""}
+      <button class="btn ghost" data-act="openRules">Voir les règles</button>
+    </div>
+    <p class="fine">Mode Hardcore réservé aux majeurs. L'abus d'alcool est dangereux pour la santé, à consommer avec modération.</p>
+  </section>`;
+}
+
+function players() {
+  return `<section class="screen">
+    <div class="stack">
+      <span class="eyebrow">Mode ${hard() ? "Hardcore" : "Classique"}</span>
+      <h2>Qui joue ?</h2>
+      <p class="lead">Le maître du jeu garde le téléphone, lit les questions et arbitre. Inscrivez ici les joueurs, sans lui.</p>
+    </div>
+    <div class="players">
+      ${S.players.map((p, i) => `<div class="player-row">
+        <input id="player-${i}" data-player="${i}" value="${esc(p)}" maxlength="20" aria-label="Nom du joueur ${i + 1}">
+        ${S.players.length > 1 ? `<button class="x" data-remove="${i}" aria-label="Retirer ${esc(p)}">✕</button>` : ""}
+      </div>`).join("")}
+    </div>
+    <div class="actions">${S.players.length < 12 ? `<button class="btn ghost" data-act="addPlayer">Ajouter un joueur</button>` : ""}</div>
+    <div class="actions">
+      <button class="btn ghost" data-act="home">Retour</button>
+      <button class="btn primary" data-act="toThemes">Choisir les thèmes</button>
+    </div>
+  </section>`;
+}
+
+// Réglage des valeurs de chaque case
+function settings() {
+  const c = cfg(), list = hard() ? c.sips : c.pts, unit = hard() ? "gorgées" : "points";
+  const row = (label, val, key) => `<div class="stepper"><span class="lbl">${label}</span><span class="ctrl">
+      <button class="step" data-cfg="${key}:-1" ${val > 1 ? "" : "disabled"} aria-label="Diminuer ${label}">−</button>
+      <span class="val">${val}</span>
+      <button class="step plus" data-cfg="${key}:1" ${val < 99 ? "" : "disabled"} aria-label="Augmenter ${label}">+</button></span></div>`;
+  return `<details class="adder settings" ${S.settingsOpen ? "open" : ""}>
+    <summary><span class="eyebrow">Valeurs des questions</span><span class="hint-line">${list.join(" · ")} ${unit}${hard() ? ` · Risque Tout : ${shots(c.shots)}` : ""}</span></summary>
+    <div class="settings-body">
+      ${list.map((v, k) => row(`x${k + 1} (${unit})`, v, (hard() ? "sips" : "pts") + "." + k)).join("")}
+      ${hard() ? row("Risque Tout (culs secs)", c.shots, "shots") : ""}
+      <div class="actions" style="justify-content:flex-start"><button class="link" data-act="resetCfg">Remettre les valeurs par défaut</button></div>
+    </div>
+  </details>`;
+}
+
+// Bloc d'ajout de thème, partagé entre la préparation et la partie
+function adder() {
+  const left = available();
+  if (!left.length) return `<p class="empty">Tous les thèmes sont déjà dans la partie.</p>`;
+  return `<div class="actions" style="justify-content:flex-start">
+      <button class="btn primary small" data-act="addRandom">Thème aléatoire</button>
+      <button class="btn ${S.picker ? "light" : ""} small" data-act="togglePicker">Choisir un thème</button>
+    </div>
+    ${played.list.length ? `<div class="played-bar">
+      <span class="hint-line">${played.show ? `<span class="dot"></span> ${plural(played.list.length, "thème déjà joué", "thèmes déjà joués")}. Le tirage au hasard les évite.` : `${plural(played.list.length, "thème déjà joué", "thèmes déjà joués")}, indicateur masqué.`}</span>
+      <span class="top-links"><button class="link" data-act="togglePlayed">${played.show ? "Masquer l'indicateur" : "Afficher l'indicateur"}</button><button class="link" data-act="askClearPlayed">Effacer l'historique</button></span>
+    </div>` : ""}
+    ${S.confirmClear ? `<div class="confirm">Oublier tous les thèmes déjà joués ?<div class="actions"><button class="btn ghost small" data-act="cancelClearPlayed">Annuler</button><button class="btn primary small" data-act="clearPlayed">Effacer</button></div></div>` : ""}
+    ${S.picker ? picker(left) : ""}`;
+}
+
+// Liste des thèmes restants, regroupés par famille et triés par ordre alphabétique
+function picker(left) {
+  const fams = {};
+  left.forEach(i => (fams[THEMES[i].family] = fams[THEMES[i].family] || []).push(i));
+  const names = Object.keys(fams).sort((a, b) => a.localeCompare(b, "fr"));
+  return `<input id="themeSearch" class="search" type="search" placeholder="Rechercher un thème" aria-label="Rechercher un thème" autocomplete="off">
+    <div class="families">${names.map(f => {
+      const multi = THEMES.filter(t => t.family === f).length > 1;
+      return `<div class="family" data-family="${esc(f.toLowerCase())}">
+        <span class="family-name">${esc(f)}</span>
+        <div class="family-series">${fams[f].map(i => `<button class="chip mini ${showPlayed(i) ? "played" : ""}" data-add="${i}" aria-label="Ajouter ${NAMES[i]}${showPlayed(i) ? ", déjà joué" : ""}">${multi ? NAMES[i].slice(f.length + 1) : "+"}</button>`).join("")}</div>
+      </div>`;
+    }).join("")}</div>`;
+}
+
+function themes() {
+  const n = S.themes.length, q = slots().length;
+  return `<section class="screen">
+    <div class="stack">
+      <span class="eyebrow">Mode ${hard() ? "Hardcore" : "Classique"} · ${plural(S.players.length, "joueur", "joueurs")}</span>
+      <h2>Les thèmes de la partie</h2>
+      <p class="lead">Ajoutez autant de thèmes que vous voulez, au hasard ou au choix. Chaque thème ajoute ${q} questions au plateau.</p>
+    </div>
+    <div class="adder">
+      <span class="eyebrow">${n ? `${plural(n, "thème", "thèmes")} · ${n * q} questions` : "Aucun thème pour l'instant"}</span>
+      ${n ? `<div class="chips">${S.themes.map(i => `<span class="chip on ${showPlayed(i) ? "played" : ""}">${NAMES[i]}${showPlayed(i) ? `<small class="played-tag">déjà joué</small>` : ""}<button data-drop="${i}" aria-label="Retirer ${NAMES[i]}">✕</button></span>`).join("")}</div>` : ""}
+      ${adder()}
+    </div>
+    ${settings()}
+    <div class="actions">
+      <button class="btn ghost" data-act="toPlayers">Retour</button>
+      <button class="btn primary" data-act="start" ${n ? "" : "disabled"}>Lancer la partie</button>
+    </div>
+  </section>`;
+}
+
+function topBar() {
+  const e = S.edit;
+  let editor = "";
+  if (e !== null) {
+    editor = hard()
+      ? `<div class="editor">
+          <div class="editor-head">Reste à boire de ${esc(S.players[e])}<button class="link" data-act="closeEdit">Fermer</button></div>
+          <div class="stepper"><span class="lbl">Gorgées</span><span class="ctrl">
+            <button class="step" data-adj="s:-1" ${S.drink[e].s ? "" : "disabled"} aria-label="Retirer une gorgée">−1</button>
+            <span class="val">${S.drink[e].s}</span>
+            <button class="step plus" data-adj="s:1" aria-label="Ajouter une gorgée">+1</button></span></div>
+          <div class="stepper"><span class="lbl">Culs secs</span><span class="ctrl">
+            <button class="step" data-adj="c:-1" ${S.drink[e].c ? "" : "disabled"} aria-label="Retirer un cul sec">−1</button>
+            <span class="val">${S.drink[e].c}</span>
+            <button class="step plus" data-adj="c:1" aria-label="Ajouter un cul sec">+1</button></span></div>
+        </div>`
+      : `<div class="editor">
+          <div class="editor-head">Score de ${esc(S.players[e])}<button class="link" data-act="closeEdit">Fermer</button></div>
+          <div class="stepper"><span class="lbl">Points</span><span class="ctrl">
+            <button class="step" data-adj="p:-5">−5</button><button class="step" data-adj="p:-1">−1</button>
+            <span class="val">${S.scores[e]}</span>
+            <button class="step plus" data-adj="p:1">+1</button><button class="step plus" data-adj="p:5">+5</button></span></div>
+        </div>`;
+  }
+  return `<div class="top">
+    <div class="top-line">
+      <div class="brand">Le Risque <span>Tout</span><span class="badge-mode ${hard() ? "hard" : ""}">${hard() ? "Hardcore" : "Classique"}</span></div>
+      <div class="top-links"><button class="link" data-act="openRules">Règles</button><button class="link" data-act="askEnd">Fin de partie</button></div>
+    </div>
+    <div class="scores">${S.players.map((p, i) => `<button class="score ${i === S.turn ? "turn" : ""} ${i === e ? "editing" : ""}" data-edit="${i}">
+      ${esc(p)} ${hard() ? `<span class="drink"><b>${S.drink[i].s}</b> g · <b>${S.drink[i].c}</b> cs</span>` : `<b>${S.scores[i]}</b>`}
+    </button>`).join("")}</div>
+    <p class="hint-line">${hard() ? "Reste à boire : g = gorgées, cs = culs secs. Touchez un joueur pour retirer ce qu'il a bu." : "Touchez un joueur pour ajuster son score."}</p>
+    ${editor}
+    ${S.confirmEnd ? `<div class="confirm">Terminer la partie maintenant ?<div class="actions"><button class="btn ghost" data-act="cancelEnd">Continuer</button><button class="btn primary" data-act="end">Terminer</button></div></div>` : ""}
+  </div>`;
+}
+
+function cellHtml(t, m, c) {
+  const used = S.used[t + "-" + c] ? "disabled" : "";
+  const label = NAMES[t];
+  if (m === "RT") return `<button class="cell rt" data-cell="${t}-${c}" ${used} aria-label="${label}, Risque Tout">RISQUE TOUT</button>`;
+  if (m === "MEGA") return `<button class="cell mega" data-cell="${t}-${c}" ${used} aria-label="${label}, Mega Risque Tout">MEGA<span>RISQUE TOUT</span></button>`;
+  return `<button class="cell" data-cell="${t}-${c}" ${used} aria-label="${label}, x${m}"><small>x</small>${m}</button>`;
+}
+
+function board() {
+  return `<section class="screen ${hard() ? "hardcore" : ""}">
+    ${topBar()}
+    <div class="turn-banner">À <em>${esc(S.players[S.turn])}</em> de choisir une question</div>
+    <div class="board">
+      ${S.themes.map(t => `<div class="row"><div class="cat">${NAMES[t]}</div>${slots().map((m, c) => cellHtml(t, m, c)).join("")}</div>`).join("")}
+    </div>
+    ${S.adding ? `<div class="adder"><div class="editor-head">Ajouter un thème<button class="link" data-act="toggleAdding">Fermer</button></div>${adder()}</div>`
+      : `<div class="actions"><button class="btn ghost small" data-act="toggleAdding">Ajouter un thème</button></div>`}
+  </section>`;
+}
+
+function stakesText(m) {
+  if (hard()) {
+    if (m === "MEGA") return `Bonne réponse : <b>ton reste à boire est effacé</b>. Mauvaise réponse : <b>ton reste à boire est doublé</b>.`;
+    if (m === "RT") return `Bonne réponse : <b>tu fais boire ${shots(cfg().shots)}</b>. Mauvaise réponse : <b>${shots(cfg().shots)} pour toi</b>.`;
+    return `Bonne réponse : <b>tu distribues ${sips(value(m))}</b>. Mauvaise réponse : <b>tu bois ${sips(value(m))}</b>.`;
+  }
+  return m === "RT"
+    ? `Bonne réponse : <b>ton score est doublé</b>. Mauvaise réponse : <b>retour à zéro</b>.`
+    : `Bonne réponse : <b>+${pts(value(m))}</b>. Mauvaise réponse : <b>−${pts(value(m))}</b>.`;
+}
+
+function question() {
+  const { t, c, revealed } = S.current;
+  const m = slots()[c];
+  const [q, a] = getQ(t, c);
+  const badge = m === "RT" ? `<div class="qbadge rt">RISQUE<br>TOUT</div>`
+    : m === "MEGA" ? `<div class="qbadge mega"><span>MEGA</span>RISQUE TOUT</div>`
+    : `<div class="qbadge">x${m}</div>`;
+  return `<section class="screen">
+    ${topBar()}
+    <div class="turn-banner">Question pour <em>${esc(S.players[S.turn])}</em></div>
+    <div class="qbar">${badge}<div class="qtext"><span class="eyebrow">${NAMES[t]}</span><p>${esc(q)}</p></div></div>
+    <p class="stakes">${stakesText(m)}</p>
+    ${revealed ? `<div class="answer"><span class="eyebrow">Réponse</span>${esc(a)}</div>
+      <div class="actions"><button class="btn light" data-answer="1">Bonne réponse</button><button class="btn primary" data-answer="0">Mauvaise réponse</button></div>`
+    : `<div class="actions"><button class="btn primary" data-act="reveal">Voir la réponse</button></div>`}
+  </section>`;
+}
+
+function giveBlock(r) {
+  const others = S.players.map((p, i) => i).filter(i => i !== r.player);
+  if (!others.length) return "";
+  if (r.m === "RT") return `<div class="give">
+      <h2>Qui boit ${r.v > 1 ? "les " + shots(r.v) : "le cul sec"} ?</h2>
+      <div class="targets">${others.map(i => `<button class="chip" data-target="${i}">${esc(S.players[i])}</button>`).join("")}</div>
+    </div>`;
+  const given = Object.values(r.dist).reduce((a, b) => a + b, 0), left = r.v - given;
+  return `<div class="give">
+    <h2>${left ? `Encore ${sips(left)} à distribuer` : "Tout est distribué"}</h2>
+    ${others.map(i => `<div class="stepper"><span class="lbl">${esc(S.players[i])}</span><span class="ctrl">
+      <button class="step" data-dist="${i}:-1" ${r.dist[i] ? "" : "disabled"} aria-label="Une gorgée de moins pour ${esc(S.players[i])}">−</button>
+      <span class="val">${r.dist[i] || 0}</span>
+      <button class="step plus" data-dist="${i}:1" ${left ? "" : "disabled"} aria-label="Une gorgée de plus pour ${esc(S.players[i])}">+</button></span></div>`).join("")}
+    <div class="actions"><button class="btn light" data-act="confirmDist" ${left ? "disabled" : ""}>Valider la distribution</button></div>
+  </div>`;
+}
+
+function verdict() {
+  const r = S.result;
+  const who = esc(S.players[r.player]);
+  let big, line, extra = "";
+  if (hard()) {
+    if (r.m === "MEGA") {
+      big = r.ok ? "Ardoise effacée" : "Tout doublé";
+      line = r.ok ? `Le reste à boire de ${who} repart à zéro.` : `${who} doit maintenant boire ${drinkText(S.drink[r.player])}.`;
+    } else if (r.m === "RT") {
+      big = r.v > 1 ? `${r.v} culs secs !` : "Cul sec !";
+      line = r.ok ? (r.target != null ? `${esc(S.players[r.target])} prend ${shots(r.v)}.` : `${who} choisit qui boit ${shots(r.v)}.`) : `${r.v > 1 ? shots(r.v) + " s'ajoutent" : "Un cul sec s'ajoute"} au reste à boire de ${who}.`;
+      if (r.ok && r.target == null) extra = giveBlock(r);
+    } else {
+      big = r.ok ? `${r.v} à donner` : `${r.v} à boire`;
+      line = r.ok ? (r.done ? `${who} a distribué ${sips(r.v)}.` : `${who} distribue ${sips(r.v)}.`) : `${r.v > 1 ? sips(r.v) + " s'ajoutent" : "1 gorgée s'ajoute"} au reste à boire de ${who}.`;
+      if (r.ok && !r.done) extra = giveBlock(r);
+    }
+  } else {
+    if (r.m === "RT") { big = r.ok ? "Doublé !" : "Tout perdu"; line = r.ok ? `${who} passe de ${pts(r.before)} à ${pts(r.after)}.` : `${who} retombe à 0 point.`; }
+    else { big = (r.ok ? "+" : "−") + r.v; line = `${who} passe à ${pts(r.after)}.`; }
+  }
+  const waiting = !!extra && S.players.length > 1;
+  const nextName = esc(S.players[(S.turn + 1) % S.players.length]);
+  return `<section class="screen">
+    ${topBar()}
+    <div class="verdict ${r.ok ? "win" : ""}">
+      <span class="who">${r.ok ? "Bonne réponse" : "Mauvaise réponse"}</span>
+      <span class="big">${big}</span>
+      <p>${line}</p>
+    </div>
+    ${extra}
+    ${waiting ? "" : `<div class="actions">${allUsed()
+      ? `<button class="btn ghost" data-act="toggleAddingFromVerdict">Ajouter un thème</button><button class="btn primary" data-act="end">${hard() ? "Terminer la partie" : "Voir le classement"}</button>`
+      : `<button class="btn primary" data-act="next">Au tour de ${nextName}</button>`}</div>`}
+  </section>`;
+}
+
+function end() {
+  if (hard()) {
+    const order = S.players.map((p, i) => ({ p, d: S.drink[i] })).sort((a, b) => (b.d.c - a.d.c) || (b.d.s - a.d.s));
+    return `<section class="screen">
+      <div class="stack"><span class="eyebrow">Fin de partie · Hardcore</span><h1>Santé <span>!</span></h1>
+      <p class="lead">Voici ce qu'il reste à boire. Buvez de l'eau et ne prenez pas le volant.</p></div>
+      <div class="ranking">${order.map(o => `<div class="rank"><span class="pos">•</span><span>${esc(o.p)}</span><span class="pts">${o.d.s} g · ${o.d.c} cs</span></div>`).join("")}</div>
+      <div class="actions"><button class="btn ghost" data-act="home">Accueil</button><button class="btn primary" data-act="replay">Rejouer</button></div>
+    </section>`;
+  }
+  const order = S.players.map((p, i) => ({ p, s: S.scores[i] })).sort((a, b) => b.s - a.s);
+  const top = order[0].s, winners = order.filter(o => o.s === top).map(o => esc(o.p));
+  return `<section class="screen">
+    <div class="stack"><span class="eyebrow">Fin de partie · Classique</span>
+      <h1>${winners.join(" et ")} <span>${winners.length > 1 ? "gagnent" : "gagne"}</span></h1></div>
+    <div class="ranking">${order.map((o, i) => `<div class="rank ${o.s === top ? "first" : ""}"><span class="pos">${i + 1}</span><span>${esc(o.p)}</span><span class="pts">${o.s}</span></div>`).join("")}</div>
+    <div class="actions"><button class="btn ghost" data-act="home">Accueil</button><button class="btn primary" data-act="replay">Rejouer</button></div>
+  </section>`;
+}
+
+/* ---------- Actions ---------- */
+function pick(list) { return list[Math.floor(Math.random() * list.length)]; }
+function getQ(t, c) {
+  const b = (S.bonus || {})[t];
+  return b && b[0] === c ? EASY[b[1]] : THEMES[t].q[c];
+}
+// Décide si ce thème cache une question cadeau, et où (Risque Tout ou Mega Risque Tout)
+function rollBonus(t) {
+  S.bonus = S.bonus || {};
+  delete S.bonus[t];
+  if (Math.random() >= EASY_RATE) return;
+  const taken = Object.values(S.bonus).map(b => b[1]);
+  const free = EASY.map((_, i) => i).filter(i => !taken.includes(i));
+  const c = hard() ? pick([5, 6]) : 5;
+  S.bonus[t] = [c, pick(free.length ? free : EASY.map((_, i) => i))];
+}
+function addTheme(i) { if (!S.themes.includes(i)) { S.themes.push(i); rollBonus(i); } S.picker = false; }
+function resetGame() { S.bonus = {}; S.themes.forEach(rollBonus); S.used = {}; S.scores = S.players.map(() => 0); S.drink = S.players.map(() => ({ s: 0, c: 0 })); S.turn = 0; S.result = null; S.current = null; }
+
+const ACTS = {
+  home: () => go("home"),
+  resume: () => { S = Object.assign(fresh(), load()); render(); },
+  resetCfg: () => { S.cfg = defaultCfg(); refresh(); },
+  addPlayer: () => { S.players.push("Joueur " + (S.players.length + 1)); refresh(); document.getElementById("player-" + (S.players.length - 1))?.select(); },
+  toThemes: () => { S.players = S.players.map((p, i) => p.trim() || "Joueur " + (i + 1)); go("themes"); },
+  toPlayers: () => go("players"),
+  addRandom: () => {
+    const left = available(), fresh = left.filter(i => !isPlayed(i));
+    if (left.length) addTheme(pick(fresh.length ? fresh : left)); refresh();
+  },
+  togglePlayed: () => { played.show = !played.show; savePlayed(); refresh(); },
+  askClearPlayed: () => { S.confirmClear = true; refresh(); },
+  cancelClearPlayed: () => { S.confirmClear = false; refresh(); },
+  clearPlayed: () => { played.list = []; savePlayed(); S.confirmClear = false; refresh(); },
+  togglePicker: () => { S.picker = !S.picker; refresh(); },
+  toggleAdding: () => { S.adding = !S.adding; S.picker = false; refresh(); },
+  toggleAddingFromVerdict: () => { S.turn = (S.turn + 1) % S.players.length; S.result = null; go("board"); S.adding = true; refresh(); },
+  start: () => { resetGame(); go("board"); },
+  reveal: () => { S.current.revealed = true; refresh(); },
+  next: () => { S.turn = (S.turn + 1) % S.players.length; S.result = null; go("board"); },
+  askEnd: () => { S.confirmEnd = true; render(); },
+  openRules: () => { S.rules = true; render(); window.scrollTo(0, 0); },
+  closeRules: () => { S.rules = false; render(); window.scrollTo(0, 0); },
+  cancelEnd: () => { S.confirmEnd = false; render(); },
+  closeEdit: () => { S.edit = null; refresh(); },
+  confirmDist: () => {
+    const r = S.result;
+    Object.entries(r.dist).forEach(([i, n]) => S.drink[i].s += n);
+    r.done = true; refresh();
+  },
+  end: () => go("end"),
+  replay: () => { resetGame(); go("themes"); },
+};
+
+function answer(ok) {
+  const { t, c } = S.current;
+  const m = slots()[c], i = S.turn, before = S.scores[i];
+  if (hard()) {
+    const d = S.drink[i];
+    if (m === "MEGA") { if (ok) { d.s = 0; d.c = 0; } else { d.s *= 2; d.c *= 2; } }
+    else if (m === "RT") { if (!ok) d.c += cfg().shots; }
+    else if (!ok) d.s += value(m);
+  } else {
+    S.scores[i] = m === "RT" ? (ok ? before * 2 : 0) : before + (ok ? value(m) : -value(m));
+  }
+  S.used[t + "-" + c] = true;
+  markPlayed(t);
+  S.result = { ok, m, v: m === "RT" ? cfg().shots : typeof m === "number" ? value(m) : 0, player: i, before, after: S.scores[i], dist: {}, done: false, target: null };
+  S.current = null;
+  go("verdict");
+}
+
+function bind() {
+  app.querySelectorAll("[data-act]").forEach(b => b.onclick = ACTS[b.dataset.act]);
+  app.querySelectorAll("[data-mode]").forEach(b => b.onclick = () => { const p = S.players; S = fresh(); S.players = p; S.mode = b.dataset.mode; go("players"); });
+  app.querySelectorAll("[data-player]").forEach(inp => inp.oninput = () => { S.players[+inp.dataset.player] = inp.value; save(); });
+  app.querySelectorAll("[data-remove]").forEach(b => b.onclick = () => { S.players.splice(+b.dataset.remove, 1); refresh(); });
+  app.querySelectorAll("[data-add]").forEach(b => b.onclick = () => { addTheme(+b.dataset.add); refresh(); });
+  app.querySelectorAll("details.settings").forEach(d => d.ontoggle = () => { S.settingsOpen = d.open; save(); });
+  app.querySelectorAll("[data-cfg]").forEach(b => b.onclick = () => {
+    const [key, v] = b.dataset.cfg.split(":"), [k, idx] = key.split("."), c = cfg();
+    if (idx === undefined) c[k] = Math.min(99, Math.max(1, c[k] + +v));
+    else c[k][idx] = Math.min(99, Math.max(1, c[k][idx] + +v));
+    S.settingsOpen = true; refresh();
+  });
+  const search = document.getElementById("themeSearch");
+  if (search) search.oninput = () => {
+    const q = search.value.trim().toLowerCase();
+    app.querySelectorAll("[data-family]").forEach(r => r.hidden = !!q && !r.dataset.family.includes(q));
+  };
+  app.querySelectorAll("[data-drop]").forEach(b => b.onclick = () => { S.themes = S.themes.filter(x => x !== +b.dataset.drop); refresh(); });
+  app.querySelectorAll("[data-cell]").forEach(b => b.onclick = () => {
+    const [t, c] = b.dataset.cell.split("-").map(Number);
+    S.current = { t, c, revealed: false }; go("question");
+  });
+  app.querySelectorAll("[data-answer]").forEach(b => b.onclick = () => answer(b.dataset.answer === "1"));
+  app.querySelectorAll("[data-edit]").forEach(b => b.onclick = () => { const i = +b.dataset.edit; S.edit = S.edit === i ? null : i; refresh(); });
+  app.querySelectorAll("[data-adj]").forEach(b => b.onclick = () => {
+    const [k, v] = b.dataset.adj.split(":"), n = +v, e = S.edit;
+    if (k === "p") S.scores[e] += n;
+    else S.drink[e][k] = Math.max(0, S.drink[e][k] + n);
+    refresh();
+  });
+  app.querySelectorAll("[data-dist]").forEach(b => b.onclick = () => {
+    const [i, v] = b.dataset.dist.split(":").map(Number), r = S.result;
+    r.dist[i] = Math.max(0, (r.dist[i] || 0) + v); refresh();
+  });
+  app.querySelectorAll("[data-target]").forEach(b => b.onclick = () => {
+    const i = +b.dataset.target; S.drink[i].c += S.result.v; S.result.target = i; refresh();
+  });
+}
+
+function start(data) {
+  if (data && data.S) {
+    S = Object.assign(fresh(), data.S);
+    if (S.drink.length !== S.players.length) S.drink = S.players.map(() => ({ s: 0, c: 0 }));
+    if (S.result && !S.result.dist) S.result.dist = {};
+  }
+  render();
+}
+window.claude?.hot?.snapshot?.(() => ({ S }));
+window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? {});
+</script>
+<script>
+if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+</script>
+</body>
+</html>
