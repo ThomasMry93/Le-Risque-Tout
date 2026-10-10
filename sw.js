@@ -1,6 +1,6 @@
 // Service worker : le jeu fonctionne hors connexion après la première visite.
 // Changer VERSION à chaque mise à jour du jeu pour forcer le rafraîchissement du cache.
-const VERSION = "risque-tout-v3";
+const VERSION = "risque-tout-v4";
 const SHELL = ["./", "index.html", "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png", "icons/apple-touch-icon.png"];
 
 self.addEventListener("install", e => {
@@ -19,7 +19,8 @@ self.addEventListener("fetch", e => {
   const url = new URL(req.url);
   // Page du jeu : réseau d'abord (pour recevoir les mises à jour), cache si hors connexion
   if (req.mode === "navigate") {
-    e.respondWith(fetch(req).then(res => {
+    // « no-store » : on ignore le cache HTTP du navigateur pour récupérer tout de suite la dernière version publiée
+    e.respondWith(fetch(req, { cache: "no-store" }).then(res => {
       const copy = res.clone();
       caches.open(VERSION).then(c => c.put("index.html", copy));
       return res;
