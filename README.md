@@ -23,6 +23,7 @@ Le mode Hardcore est réservé aux majeurs. L'abus d'alcool est dangereux pour l
 ## Fonctionnalités
 
 - 114 séries de 7 questions réparties en 46 thèmes, ajoutées au hasard ou au choix, même en cours de partie
+- Thèmes perso : créez vos propres thèmes et questions (gardés sur le téléphone)
 - Valeurs des cases réglables (points, gorgées, culs secs du Risque Tout)
 - Scores et « reste à boire » ajustables à la main
 - Thèmes déjà joués signalés (indicateur masquable, historique effaçable)

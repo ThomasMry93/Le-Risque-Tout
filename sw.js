@@ -1,6 +1,6 @@
 // Service worker : le jeu fonctionne hors connexion après la première visite.
 // Changer VERSION à chaque mise à jour du jeu pour forcer le rafraîchissement du cache.
-const VERSION = "risque-tout-v2";
+const VERSION = "risque-tout-v3";
 const SHELL = ["./", "index.html", "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png", "icons/apple-touch-icon.png"];
 
 self.addEventListener("install", e => {

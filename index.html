@@ -107,6 +107,16 @@ button:focus-visible, input:focus-visible { outline: 3px solid var(--ink); outli
 .mode-line { font-weight: 600; font-size: .9rem; line-height: 1.4; }
 .mode { align-content: center; }
 
+/* Mes thèmes */
+.mine-list { display: grid; gap: 0; }
+.mine-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 0; border-top: 1px solid var(--line); flex-wrap: wrap; }
+.mine-info { display: grid; gap: 4px; min-width: 0; }
+.qedit { gap: 10px; }
+.qedit-risk { border-color: var(--red); }
+textarea.search { border-radius: 16px; resize: vertical; font-family: var(--f-text); line-height: 1.4; }
+.draft-error { margin: 0; text-align: center; font-weight: 800; color: var(--ink); background: var(--red); border-radius: 14px; padding: 12px 16px; }
+.perso { font-family: var(--f-text); font-weight: 800; text-transform: none; letter-spacing: 0; color: var(--red); font-size: .72rem; }
+
 /* Joueurs */
 .players { display: grid; gap: 10px; }
 .player-row { display: flex; gap: 10px; align-items: center; }
@@ -263,6 +273,9 @@ button:focus-visible, input:focus-visible { outline: 3px solid var(--ink); outli
 body.jolt #app { animation: jolt .28s linear; }
 @keyframes jolt { 0%, 100% { transform: translate(0, 0); } 20% { transform: translate(-6px, 3px); } 40% { transform: translate(5px, -4px); } 60% { transform: translate(-4px, 2px); } 80% { transform: translate(3px, -1px); } }
 .mascot.leave { animation: m-out .18s ease-in forwards; }
+/* Au repos (ni arrivée ni départ), la mascotte flottante et sa bulle sont invisibles */
+.mascot { visibility: hidden; }
+.mascot.show, .mascot.leave, .mascot.hero { visibility: visible; }
 .mascot .bubble { transition: opacity .15s, transform .15s; }
 .mascot.leave .bubble { opacity: 0; transform: scale(.6); }
 .mascot svg { width: 100%; height: auto; display: block; overflow: visible; filter: drop-shadow(4px 5px 0 rgba(0,0,0,.55)); }
@@ -389,7 +402,7 @@ body.jolt #app { animation: jolt .28s linear; }
 /* ---------- Questions : x1, x2, x3, x4, x5, Risque Tout, Mega Risque Tout (Hardcore uniquement) ----------
    Dans chaque série, la difficulté monte de x1 (la plus facile) jusqu'au Mega Risque Tout (la plus difficile).
    Plusieurs séries d'une même famille sont numérotées automatiquement : Sport 1, Sport 2… */
-const THEMES = [
+const BUILTIN = [
   { family: "Médias", q: [
     ["Quelle chaîne diffuse le JT de 20 h présenté par Gilles Bouleau ?", "TF1"],
     ["Quel quotidien sportif est le plus lu en France ?", "L'Équipe"],
@@ -1303,11 +1316,22 @@ const THEMES = [
     ["Quel peintre espagnol a réalisé « Les Ménines » ?", "Diego Vélasquez"],
     ["Quel peintre a réalisé le triptyque « Le Jardin des délices » ?", "Jérôme Bosch"] ]},
 ];
-// Nom affiché : la famille, suivie d'un numéro si elle a plusieurs séries
-const NAMES = THEMES.map((t, i) => {
-  const same = THEMES.filter(x => x.family === t.family);
-  return same.length > 1 ? `${t.family} ${THEMES.slice(0, i + 1).filter(x => x.family === t.family).length}` : t.family;
-});
+/* ---------- Thèmes perso, créés par le maître du jeu et gardés sur ce téléphone ---------- */
+const CUSTOM = "risque-tout-perso";
+let custom = (() => { try { return JSON.parse(localStorage.getItem(CUSTOM)) || []; } catch (e) { return []; } })();
+function saveCustom() { try { localStorage.setItem(CUSTOM, JSON.stringify(custom)); } catch (e) {} }
+
+// Liste complète : les séries du jeu puis les thèmes perso, ajoutés à la suite
+let THEMES = [], NAMES = [];
+function rebuildThemes() {
+  THEMES = BUILTIN.concat(custom.map(c => ({ family: c.name, q: c.q, custom: c.id })));
+  // Nom affiché : la famille, suivie d'un numéro si elle a plusieurs séries
+  NAMES = THEMES.map((t, i) => {
+    const same = THEMES.filter(x => x.family === t.family);
+    return same.length > 1 ? `${t.family} ${THEMES.slice(0, i + 1).filter(x => x.family === t.family).length}` : t.family;
+  });
+}
+rebuildThemes();
 const SLOTS_CLASSIC = [1, 2, 3, 4, 5, "RT"];
 const SLOTS_HARD = [1, 2, 3, 4, 5, "RT", "MEGA"];
 
@@ -1366,14 +1390,15 @@ const value = m => (hard() ? cfg().sips : cfg().pts)[m - 1];
 const pts = n => plural(n, "point", "points");
 const drinkText = d => (!d.s && !d.c) ? "rien à boire" : [d.s ? sips(d.s) : "", d.c ? shots(d.c) : ""].filter(Boolean).join(" et ");
 const available = () => THEMES.map((_, i) => i).filter(i => !S.themes.includes(i));
-const allUsed = () => S.themes.every(t => slots().every((_, c) => S.used[t + "-" + c]));
+const missing = (t, c) => !(getQ(t, c) || [""])[0];
+const allUsed = () => S.themes.every(t => slots().every((_, c) => S.used[t + "-" + c] || missing(t, c)));
 
 function go(screen) { S.screen = screen; S.confirmEnd = false; S.edit = null; S.picker = false; S.adding = false; save(); render(); window.scrollTo(0, 0); }
 function refresh() { save(); render(); }
 
 /* ---------- Écrans ---------- */
 function render() {
-  const fn = S.rules ? rules : ({ home, players, themes, board, question, verdict, end }[S.screen] || home);
+  const fn = S.rules ? rules : ({ home, players, themes, board, question, verdict, end, mine, editor }[S.screen] || home);
   app.innerHTML = fn();
   bind();
   react();
@@ -1407,6 +1432,8 @@ function mood() {
       return ["sad", r.m === "MEGA" ? "Ça va piquer…" : r.m === "RT" ? (hard() ? "Cul sec !" : "Aïe… tout perdu !") : hard() ? "Santé !" : "Raté !"];
     }
     case "end": return ["cheer", "Quelle partie !"];
+    case "mine": return ["think", "Tes propres questions ? J'adore !"];
+    case "editor": return ["point", "Fais-les bien vicieuses !"];
   }
   return ["wave", ""];
 }
@@ -1518,6 +1545,7 @@ function home() {
     <div class="actions">
       ${resume ? `<button class="btn ghost" data-act="resume">Reprendre la partie en cours</button>` : ""}
       <button class="btn ghost" data-act="openRules">Voir les règles</button>
+      <button class="btn ghost" data-act="openMine">Mes thèmes</button>
     </div>
     <p class="fine">Mode Hardcore réservé aux majeurs. L'abus d'alcool est dangereux pour la santé, à consommer avec modération.</p>
   </section>`;
@@ -1604,7 +1632,7 @@ function picker(left) {
     <div class="families">${names.map(f => {
       const multi = THEMES.filter(t => t.family === f).length > 1;
       return `<div class="family" data-family="${esc(f.toLowerCase())}">
-        <span class="family-name">${esc(f)}</span>
+        <span class="family-name">${esc(f)}${fams[f].some(i => THEMES[i].custom) ? ` <small class="perso">perso</small>` : ""}</span>
         <div class="family-series">${fams[f].map(i => `<button class="chip mini ${showPlayed(i) ? "played" : ""}" data-add="${i}" aria-label="Ajouter ${NAMES[i]}${showPlayed(i) ? ", déjà joué" : ""}">${multi ? NAMES[i].slice(f.length + 1) : "+"}</button>`).join("")}</div>
       </div>`;
     }).join("")}</div>`;
@@ -1624,11 +1652,76 @@ function themes() {
       ${adder()}
     </div>
     ${settings()}
+    <div class="actions"><button class="link" data-act="openMine">Créer ou modifier mes thèmes</button></div>
     <div class="actions">
       <button class="btn ghost" data-act="toPlayers">Retour</button>
       <button class="btn primary" data-act="start" ${n ? "" : "disabled"}>Lancer la partie</button>
     </div>
   </section>`;
+}
+
+/* ---------- Écrans « Mes thèmes » ---------- */
+const SLOT_LABELS = ["x1 · la plus facile", "x2", "x3", "x4", "x5", "Risque Tout", "Mega Risque Tout · Hardcore, facultative"];
+
+function mine() {
+  return `<section class="screen">
+    <div class="stack">
+      <span class="eyebrow">Thèmes perso</span>
+      <h2>Mes thèmes</h2>
+      <p class="lead">Créez vos propres thèmes avec vos questions. Ils sont gardés sur ce téléphone et apparaissent avec les autres au moment de choisir les thèmes.</p>
+    </div>
+    ${custom.length ? `<div class="mine-list">${custom.map(c => {
+      const i = THEMES.findIndex(t => t.custom === c.id);
+      return `<div class="mine-row">
+        <div class="mine-info"><span class="family-name">${esc(NAMES[i])}</span><span class="hint-line">${c.q.filter(x => x[0]).length} questions</span></div>
+        ${S.confirmDel === c.id
+          ? `<span class="top-links"><button class="link" data-act="cancelDel">Annuler</button><button class="btn primary small" data-del="${c.id}">Supprimer</button></span>`
+          : `<span class="top-links"><button class="btn small" data-editc="${c.id}">Modifier</button><button class="link" data-askdel="${c.id}">Supprimer</button></span>`}
+      </div>`;
+    }).join("")}</div>`
+    : `<div class="adder"><p class="empty">Aucun thème perso pour l'instant. Créez le premier : un nom, puis 6 questions de la plus facile à la plus difficile (7 pour le mode Hardcore).</p></div>`}
+    <div class="actions">
+      <button class="btn ghost" data-act="closeMine">Retour</button>
+      <button class="btn primary" data-act="newCustom">Créer un thème</button>
+    </div>
+  </section>`;
+}
+
+function editor() {
+  const d = S.draft;
+  return `<section class="screen">
+    <div class="stack">
+      <span class="eyebrow">${d.id ? "Modifier un thème" : "Nouveau thème"}</span>
+      <h2>${d.id ? esc(d.name || "Mon thème") : "Créer un thème"}</h2>
+      <p class="lead">Classez les questions de la plus facile (x1) à la plus difficile. Le Mega Risque Tout ne sert qu'en Hardcore : sans lui, sa case reste fermée.</p>
+    </div>
+    <div class="adder">
+      <label class="eyebrow" for="draftName">Nom du thème</label>
+      <input id="draftName" class="search" maxlength="30" placeholder="Ex. : Nos souvenirs de vacances" value="${esc(d.name)}" data-draft="name">
+    </div>
+    ${d.q.map(([q, a], k) => `<div class="adder qedit ${k >= 5 ? "qedit-risk" : ""}">
+      <span class="eyebrow">${SLOT_LABELS[k]}</span>
+      <textarea id="draftQ${k}" class="search" rows="2" maxlength="200" placeholder="Question" data-draft="q${k}" aria-label="Question ${SLOT_LABELS[k]}">${esc(q)}</textarea>
+      <input id="draftA${k}" class="search" maxlength="60" placeholder="Réponse" value="${esc(a)}" data-draft="a${k}" aria-label="Réponse ${SLOT_LABELS[k]}">
+    </div>`).join("")}
+    ${S.draftError ? `<p class="draft-error">${S.draftError}</p>` : ""}
+    <div class="actions">
+      <button class="btn ghost" data-act="cancelDraft">Annuler</button>
+      <button class="btn primary" data-act="saveDraft">Enregistrer le thème</button>
+    </div>
+  </section>`;
+}
+
+// Supprime un thème perso et décale les numéros des thèmes qui le suivent dans la partie en cours
+function deleteCustom(id) {
+  const oi = THEMES.findIndex(t => t.custom === id);
+  custom = custom.filter(c => c.id !== id);
+  saveCustom();
+  const shift = i => i > oi ? i - 1 : i;
+  S.themes = S.themes.filter(i => i !== oi).map(shift);
+  const used = {}; Object.keys(S.used || {}).forEach(k => { const [t, c] = k.split("-").map(Number); if (t !== oi) used[shift(t) + "-" + c] = S.used[k]; }); S.used = used;
+  const bonus = {}; Object.keys(S.bonus || {}).forEach(k => { if (+k !== oi) bonus[shift(+k)] = S.bonus[k]; }); S.bonus = bonus;
+  rebuildThemes();
 }
 
 function topBar() {
@@ -1670,7 +1763,7 @@ function topBar() {
 }
 
 function cellHtml(t, m, c) {
-  const used = S.used[t + "-" + c] ? "disabled" : "";
+  const used = S.used[t + "-" + c] || missing(t, c) ? "disabled" : "";
   const label = NAMES[t];
   if (m === "RT") return `<button class="cell rt" data-cell="${t}-${c}" ${used} aria-label="${label}, Risque Tout">RISQUE TOUT</button>`;
   if (m === "MEGA") return `<button class="cell mega" data-cell="${t}-${c}" ${used} aria-label="${label}, Mega Risque Tout">MEGA<span>RISQUE TOUT</span></button>`;
@@ -1844,6 +1937,27 @@ const ACTS = {
     r.done = true; refresh();
   },
   end: () => go("end"),
+  openMine: () => { S.back = S.screen; S.confirmDel = null; go("mine"); },
+  closeMine: () => go(S.back && S.back !== "mine" && S.back !== "editor" ? S.back : "home"),
+  newCustom: () => { S.draft = { id: null, name: "", q: SLOT_LABELS.map(() => ["", ""]) }; S.draftError = ""; go("editor"); },
+  cancelDel: () => { S.confirmDel = null; refresh(); },
+  cancelDraft: () => { S.draft = null; go("mine"); },
+  saveDraft: () => {
+    const d = S.draft, name = d.name.replace(/[<>"&]/g, "").trim();
+    const holes = d.q.slice(0, 6).map(([q, a], k) => q.trim() && a.trim() ? null : SLOT_LABELS[k].split(" ·")[0]).filter(Boolean);
+    const megaHalf = !!d.q[6][0].trim() !== !!d.q[6][1].trim();
+    if (!name) S.draftError = "Donnez un nom au thème.";
+    else if (holes.length) S.draftError = `Il manque la question ou la réponse pour : ${holes.join(", ")}.`;
+    else if (megaHalf) S.draftError = "Mega Risque Tout : remplissez la question et la réponse, ou laissez les deux vides.";
+    else {
+      const q = d.q.map(([a, b]) => [a.trim(), b.trim()]);
+      if (d.id) { const c = custom.find(x => x.id === d.id); c.name = name; c.q = q; }
+      else custom.push({ id: "c" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name, q });
+      saveCustom(); rebuildThemes();
+      S.draft = null; S.draftError = ""; go("mine"); return;
+    }
+    refresh(); window.scrollTo(0, document.body.scrollHeight);
+  },
   replay: () => { resetGame(); go("themes"); },
 };
 
@@ -1867,6 +1981,17 @@ function answer(ok) {
 
 function bind() {
   app.querySelectorAll("[data-act]").forEach(b => b.onclick = ACTS[b.dataset.act]);
+  app.querySelectorAll("[data-draft]").forEach(el => el.oninput = () => {
+    const k = el.dataset.draft, d = S.draft;
+    if (k === "name") d.name = el.value; else d.q[+k.slice(1)][k[0] === "q" ? 0 : 1] = el.value;
+    save();
+  });
+  app.querySelectorAll("[data-editc]").forEach(b => b.onclick = () => {
+    const c = custom.find(x => x.id === b.dataset.editc);
+    S.draft = { id: c.id, name: c.name, q: SLOT_LABELS.map((_, k) => [...(c.q[k] || ["", ""])]) }; S.draftError = ""; go("editor");
+  });
+  app.querySelectorAll("[data-askdel]").forEach(b => b.onclick = () => { S.confirmDel = b.dataset.askdel; refresh(); });
+  app.querySelectorAll("[data-del]").forEach(b => b.onclick = () => { deleteCustom(b.dataset.del); S.confirmDel = null; refresh(); });
   const hero = document.getElementById("heroMascot");
   if (hero) hero.onclick = poke;
   app.querySelectorAll("[data-mode]").forEach(b => b.onclick = () => { const p = S.players; S = fresh(); S.players = p; S.mode = b.dataset.mode; go("players"); });
