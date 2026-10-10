@@ -86,6 +86,27 @@ button:focus-visible, input:focus-visible { outline: 3px solid var(--ink); outli
 .mode .tag { font-family: var(--f-label); font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; opacity: .85; }
 .fine { margin: 0; font-size: .78rem; color: var(--muted); text-align: center; }
 
+/* Accueil : titre, mascotte géante sur fond de rayons, choix du mode */
+.hero { display: grid; justify-items: center; gap: 6px; text-align: center; padding-top: 8px; }
+.hero-title { display: grid; justify-items: center; line-height: 1; gap: 2px; margin: 0; }
+.hero-title .t1 { font-size: clamp(1.6rem, 7vw, 2.6rem); letter-spacing: .04em; }
+.hero-title .t2 { font-family: var(--f-score); font-weight: 400; color: var(--red); font-size: clamp(3.6rem, 19vw, 7rem); transform: rotate(-4deg); text-shadow: 4px 5px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000; }
+.hero-stage { overflow: hidden; position: relative; width: min(300px, 78vw); aspect-ratio: 1; display: grid; place-items: center; margin-top: 6px; }
+.rays { position: absolute; inset: 0; border-radius: 50%; background: repeating-conic-gradient(from 0deg, rgba(226,35,46,.55) 0deg 10deg, transparent 10deg 20deg); -webkit-mask: radial-gradient(circle, #000 25%, transparent 70%); mask: radial-gradient(circle, #000 25%, transparent 70%); animation: spin 18s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.mascot.hero { position: relative; right: auto; bottom: auto; left: auto; top: auto; width: 74%; transform: none; pointer-events: auto; z-index: 1; background: none; border: 0; padding: 0; cursor: pointer; }
+.mascot.hero svg { filter: drop-shadow(6px 8px 0 rgba(0,0,0,.6)); }
+.mascot.hero .rig { animation: m-bob 2.4s ease-in-out infinite; }
+.mascot.hero.wave .arm-r { animation: m-wave .6s ease-in-out .4s infinite; }
+.mascot.hero.cheer .rig { animation: m-jump .6s ease-out 3; }
+.hero-bubble { position: relative; z-index: 2; margin-top: 14px; margin-bottom: -18px; max-width: min(280px, 80vw); background: var(--pill); color: var(--red); border: 3px solid #000; border-radius: 18px; padding: 10px 16px; font-family: var(--f-label); text-transform: uppercase; letter-spacing: .03em; font-size: .85rem; line-height: 1.25; box-shadow: 4px 5px 0 rgba(0,0,0,.55); }
+.hero-bubble::after { content: ""; position: absolute; left: 50%; bottom: -12px; width: 18px; height: 18px; margin-left: -9px; background: var(--pill); border-right: 3px solid #000; border-bottom: 3px solid #000; transform: rotate(45deg); }
+.hero-bubble.pop { animation: b-pop .3s cubic-bezier(.2,1.6,.4,1); }
+@keyframes m-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+.hero-tag { margin: 4px 0 0; font-weight: 800; color: var(--muted); font-size: 1rem; }
+.mode-line { font-weight: 600; font-size: .9rem; line-height: 1.4; }
+.mode { align-content: center; }
+
 /* Joueurs */
 .players { display: grid; gap: 10px; }
 .player-row { display: flex; gap: 10px; align-items: center; }
@@ -221,15 +242,34 @@ button:focus-visible, input:focus-visible { outline: 3px solid var(--ink); outli
 }
 /* Mascotte : surgit en bas à droite à chaque changement d'écran, réagit, puis repart */
 .mascot { position: fixed; right: 10px; bottom: calc(8px + env(safe-area-inset-bottom, 0px)); width: 104px; z-index: 50; pointer-events: none; transform: translateY(150%); }
-.mascot.show { animation: m-in .6s ease-out forwards; }
-.mascot.leave { animation: m-out .35s ease-in forwards; }
+.mascot.show { animation: m-in .32s cubic-bezier(.2,.9,.3,1) forwards; }
+.mascot .bubble { transform-origin: 100% 100%; }
+/* Emplacements tirés au hasard à chaque apparition ; à gauche, la mascotte est retournée et la bulle passe à droite */
+.mascot.pos-br, .mascot.pos-bl { top: auto; bottom: calc(8px + env(safe-area-inset-bottom, 0px)); }
+.mascot.pos-tr, .mascot.pos-tl { bottom: auto; top: calc(64px + env(safe-area-inset-top, 0px)); }
+.mascot.pos-mr, .mascot.pos-ml { bottom: auto; top: 42%; }
+.mascot.pos-br, .mascot.pos-tr, .mascot.pos-mr { right: 10px; left: auto; }
+.mascot.pos-bl, .mascot.pos-tl, .mascot.pos-ml { left: 10px; right: auto; }
+.mascot.pos-bl svg, .mascot.pos-tl svg, .mascot.pos-ml svg { transform: scaleX(-1); }
+.mascot.pos-bl .bubble, .mascot.pos-tl .bubble, .mascot.pos-ml .bubble { right: auto; left: 76%; border-radius: 16px 16px 16px 4px; transform-origin: 0 100%; }
+.mascot.pos-tr .bubble, .mascot.pos-tl .bubble { bottom: auto; top: 86%; }
+.mascot.pos-tr .bubble { border-radius: 16px 4px 16px 16px; transform-origin: 100% 0; }
+.mascot.pos-tl .bubble { border-radius: 4px 16px 16px 16px; transform-origin: 0 0; }
+.mascot.show .bubble { animation: b-pop .25s cubic-bezier(.2,1.6,.4,1) .12s both; }
+@keyframes b-pop { from { transform: scale(0) rotate(-12deg); } to { transform: scale(1) rotate(0); } }
+.mascot::before { content: ""; position: absolute; inset: -30% -20% -10%; background: radial-gradient(circle, rgba(255,255,255,.9) 0 18%, rgba(226,35,46,.6) 35%, transparent 62%); transform: scale(0); opacity: 0; pointer-events: none; }
+.mascot.show::before { animation: m-flash .35s ease-out; }
+@keyframes m-flash { 0% { transform: scale(.2); opacity: 1; } 100% { transform: scale(1.6); opacity: 0; } }
+body.jolt #app { animation: jolt .28s linear; }
+@keyframes jolt { 0%, 100% { transform: translate(0, 0); } 20% { transform: translate(-6px, 3px); } 40% { transform: translate(5px, -4px); } 60% { transform: translate(-4px, 2px); } 80% { transform: translate(3px, -1px); } }
+.mascot.leave { animation: m-out .18s ease-in forwards; }
 .mascot .bubble { transition: opacity .15s, transform .15s; }
 .mascot.leave .bubble { opacity: 0; transform: scale(.6); }
 .mascot svg { width: 100%; height: auto; display: block; overflow: visible; filter: drop-shadow(4px 5px 0 rgba(0,0,0,.55)); }
 .mascot .bubble { position: absolute; right: 76%; bottom: 84%; border: 3px solid #000; width: max-content; max-width: min(220px, 60vw); background: var(--pill); color: var(--red); font-family: var(--f-label); text-transform: uppercase; font-size: .78rem; letter-spacing: .03em; line-height: 1.25; padding: 10px 14px; border-radius: 16px 16px 4px 16px; box-shadow: 0 8px 20px rgba(0,0,0,.55); }
 .mascot .rig { transform-box: view-box; transform-origin: 62px 142px; }
-.mascot .arm-l { transform-box: view-box; transform-origin: 27px 88px; transition: transform .3s; }
-.mascot .arm-r { transform-box: view-box; transform-origin: 97px 88px; transition: transform .3s; }
+.mascot .arm-l { transform-box: view-box; transform-origin: 42px 102px; transition: transform .3s; }
+.mascot .arm-r { transform-box: view-box; transform-origin: 82px 102px; transition: transform .3s; }
 .mascot .brows, .mascot .pupils { transition: transform .3s; }
 .mascot .m-open, .mascot .m-sad, .mascot .m-wavy, .mascot .drunk-only { display: none; }
 .mascot.drunk .drunk-only { display: inline; }
@@ -246,8 +286,8 @@ button:focus-visible, input:focus-visible { outline: 3px solid var(--ink); outli
 @keyframes m-sway { 0%, 100% { transform: rotate(-9deg) translateX(-2px); } 50% { transform: rotate(8deg) translateX(3px); } }
 @keyframes m-twinkle { 0%, 100% { transform: scale(0) rotate(0); } 50% { transform: scale(1.2) rotate(45deg); } }
 @keyframes m-hic { 0% { transform: translateY(6px) scale(.4); opacity: 0; } 30% { opacity: 1; } 100% { transform: translateY(-14px) scale(1); opacity: 0; } }
-@keyframes m-in { 0% { transform: translateY(150%) rotate(-200deg) scale(.5); } 60% { transform: translateY(-8%) rotate(12deg) scale(1.15, .9); } 80% { transform: translateY(0) rotate(-4deg) scale(.95, 1.06); } 100% { transform: translateY(0) rotate(0) scale(1); } }
-@keyframes m-out { 0% { transform: translateY(0) scale(1); } 30% { transform: translateY(-10%) scale(.9, 1.12); } 100% { transform: translateY(260%); visibility: hidden; } }
+@keyframes m-in { 0% { transform: scale(.1) rotate(-25deg); } 55% { transform: scale(1.45) rotate(8deg); } 75% { transform: scale(.88, 1.12) rotate(-4deg); } 90% { transform: scale(1.06, .95); } 100% { transform: scale(1) rotate(0); } }
+@keyframes m-out { 0% { transform: scale(1); } 40% { transform: scale(1.2, .8); } 100% { transform: scale(0) rotate(30deg); visibility: hidden; } }
 @keyframes m-wave { 0%, 100% { transform: rotate(-10deg); } 50% { transform: rotate(25deg); } }
 @keyframes m-jump { 0%, 100% { transform: translateY(0) scaleY(1); } 15% { transform: translateY(2px) scaleY(.92); } 45% { transform: translateY(-16px) scaleY(1.04); } 70% { transform: translateY(0) scaleY(.96); } }
 @keyframes m-shake { 0%, 100% { transform: translateX(0) rotate(0); } 20% { transform: translateX(-4px) rotate(-4deg); } 40% { transform: translateX(4px) rotate(4deg); } 60% { transform: translateX(-3px) rotate(-3deg); } 80% { transform: translateX(3px) rotate(2deg); } }
@@ -271,13 +311,14 @@ button:focus-visible, input:focus-visible { outline: 3px solid var(--ink); outli
 .mascot.sad .arm-l { transform: rotate(-115deg); } .mascot.sad .arm-r { transform: rotate(115deg); }
 .mascot.sad .rig { animation: m-tilt 1.6s ease-in-out .3s 1; }
 .mascot.point .arm-r { transform: rotate(-55deg); }
-.mascot .brow-l { transform-box: view-box; transform-origin: 46px 41px; transition: transform .3s; }
-.mascot .brow-r { transform-box: view-box; transform-origin: 78px 41px; transition: transform .3s; }
+.mascot .brow-l { transform-box: view-box; transform-origin: 49px 38px; transition: transform .3s; }
+.mascot .brow-r { transform-box: view-box; transform-origin: 77px 44px; transition: transform .3s; }
 @media (max-width: 640px) { .mascot { width: 82px; } .mascot .bubble { font-size: .7rem; } }
 
 @media (prefers-reduced-motion: reduce) {
   .cell { transition: none; }
-  .mascot, .mascot * { animation: none !important; }
+  .mascot, .mascot *, .mascot::before, body.jolt #app, .rays { animation: none !important; }
+  .mascot.hero { opacity: 1; }
   .mascot { transform: none; opacity: 0; transition: opacity .2s; }
   .mascot.show { opacity: 1; }
 }
@@ -289,56 +330,57 @@ button:focus-visible, input:focus-visible { outline: 3px solid var(--ink); outli
   <div class="bubble" id="mascotLine"></div>
   <svg viewBox="-6 -14 136 168">
     <g class="sway"><g class="rig" stroke="#000" stroke-linecap="round" stroke-linejoin="round">
-      <!-- jambes et baskets -->
-      <path d="M50 118 L47 136 M74 118 L77 136" stroke-width="5" fill="none"/>
-      <path d="M33 140 Q33 131 46 132 Q56 133 57 140 Z" fill="#f4f2f0" stroke-width="4"/>
-      <path d="M67 140 Q68 133 78 132 Q91 131 91 140 Z" fill="#f4f2f0" stroke-width="4"/>
-      <path d="M38 136 L52 136 M72 136 L86 136" stroke="#e2232e" stroke-width="3"/>
-      <!-- bras en caoutchouc et gants -->
-      <g class="arm-l"><path d="M27 88 Q12 86 10 68" stroke-width="5" fill="none"/><circle cx="10" cy="64" r="8.5" fill="#f4f2f0" stroke-width="4"/><path d="M6 60 L8 64 M10 58 L11 63" stroke-width="2" fill="none"/></g>
-      <g class="arm-r"><path d="M97 88 Q112 86 114 68" stroke-width="5" fill="none"/><circle cx="114" cy="64" r="8.5" fill="#f4f2f0" stroke-width="4"/><path d="M118 60 L116 64 M114 58 L113 63" stroke-width="2" fill="none"/></g>
-      <!-- corps en haricot -->
-      <path d="M62 26 C94 26 102 52 101 82 C100 110 86 122 62 122 C38 122 22 110 22 82 C22 52 30 26 62 26 Z" fill="#e2232e" stroke-width="5"/>
-      <path d="M90 44 C99 60 100 92 88 110 C96 96 96 64 90 44 Z" fill="#b3121b" stroke="none"/>
-      <ellipse cx="40" cy="42" rx="8" ry="4.5" fill="#fff" opacity=".35" stroke="none" transform="rotate(-35 40 42)"/>
-      <!-- chapeau haut-de-forme penché -->
-      <g transform="rotate(14 66 30)">
-        <ellipse cx="66" cy="30" rx="25" ry="6" fill="#000" stroke-width="3"/>
-        <path d="M52 30 L54 2 Q66 -2 78 2 L80 30 Z" fill="#000" stroke-width="3"/>
-        <path d="M53 22 L79 22 L79.6 28 L52.6 28 Z" fill="#e2232e" stroke="none"/>
-        <path d="M58 6 L57 18" stroke="#fff" stroke-width="2.5" opacity=".5" fill="none"/>
-      </g>
-      <!-- grands yeux -->
-      <ellipse cx="48" cy="64" rx="14" ry="17" fill="#fff" stroke-width="4"/>
-      <ellipse cx="76" cy="64" rx="14" ry="17" fill="#fff" stroke-width="4"/>
-      <g class="pupils" stroke="none"><circle cx="51" cy="67" r="5.5" fill="#000"/><circle cx="73" cy="67" r="5.5" fill="#000"/><circle cx="53" cy="65" r="1.8" fill="#fff"/><circle cx="75" cy="65" r="1.8" fill="#fff"/></g>
-      <path d="M37 50 L33 45 M43 47.5 L41 42 M58 50 L62 45 M66 50 L62 45 M81 47.5 L83 42 M87 50 L91 45" stroke-width="2.5" fill="none" class="lashes"/>
+      <!-- jambes et chaussures vernies -->
+      <path d="M52 128 L50 140 M72 128 L74 140" stroke-width="7" fill="none"/>
+      <path d="M38 143 Q38 136 50 137 Q58 138 58 143 Z M66 143 Q66 138 74 137 Q86 136 86 143 Z" fill="#000" stroke-width="3"/>
+      <!-- bras : main gauche gantée, main droite tenant le micro -->
+      <g class="arm-l"><path d="M42 102 Q25 100 19 84" stroke="#e2232e" stroke-width="9" fill="none"/><path d="M42 102 Q25 100 19 84" stroke-width="2" fill="none" opacity="0"/><circle cx="18" cy="79" r="7" fill="#f4c7a1" stroke-width="3.5"/></g>
+      <g class="arm-r"><path d="M82 102 Q99 100 105 84" stroke="#e2232e" stroke-width="9" fill="none"/>
+        <path d="M104 78 L110 58" stroke-width="5" fill="none"/><circle cx="111" cy="53" r="6.5" fill="#9a9a9a" stroke-width="3"/><path d="M107 51 L115 55 M108 56 L114 50" stroke-width="1.5" fill="none" opacity=".6"/>
+        <circle cx="106" cy="80" r="7" fill="#f4c7a1" stroke-width="3.5"/></g>
+      <!-- veste de présentateur -->
+      <path d="M40 96 Q62 88 84 96 L90 130 L34 130 Z" fill="#e2232e" stroke-width="4"/>
+      <path d="M52 94 L62 118 L72 94 Z" fill="#fff" stroke-width="3"/>
+      <path d="M50 94 L62 120 L56 100 Z M74 94 L62 120 L68 100 Z" fill="#000" stroke-width="2"/>
+      <circle cx="62" cy="124" r="2" fill="#000" stroke="none"/>
+      <path d="M62 98 L53 93 L53 103 Z M62 98 L71 93 L71 103 Z" fill="#000" stroke-width="2"/>
+      <!-- oreilles et tête -->
+      <ellipse cx="28" cy="60" rx="6" ry="8" fill="#f4c7a1" stroke-width="3.5"/>
+      <ellipse cx="96" cy="60" rx="6" ry="8" fill="#f4c7a1" stroke-width="3.5"/>
+      <path d="M62 22 C88 22 96 40 96 58 C96 80 82 94 62 94 C42 94 28 80 28 58 C28 40 36 22 62 22 Z" fill="#f4c7a1" stroke-width="4.5"/>
+      <!-- banane gominée -->
+      <path d="M28 54 C22 30 34 6 58 2 C76 -1 98 6 100 18 C92 12 84 14 82 20 C90 22 96 32 96 52 C90 36 80 30 66 30 C50 30 36 34 28 54 Z" fill="#111" stroke-width="4"/>
+      <path d="M44 14 C54 6 70 4 84 9" stroke="#fff" stroke-width="3" fill="none" opacity=".35"/>
+      <!-- yeux dépareillés -->
+      <circle cx="50" cy="58" r="12" fill="#fff" stroke-width="3.5"/>
+      <circle cx="76" cy="57" r="8.5" fill="#fff" stroke-width="3.5"/>
+      <g class="pupils" stroke="none"><circle cx="52" cy="59" r="3.5" fill="#000"/><circle cx="74" cy="58" r="2.6" fill="#000"/></g>
+      <path class="lashes" d="M41 48 L37 44 M47 46 L46 41 M84 50 L88 47" stroke-width="2.5" fill="none"/>
       <g class="drunk-only">
-        <path d="M34 63 C34 42 62 42 62 63 Q48 58 34 63 Z" fill="#e2232e" stroke-width="3.5"/>
-        <path d="M62 63 C62 42 90 42 90 63 Q76 58 62 63 Z" fill="#e2232e" stroke-width="3.5"/>
-        <ellipse cx="33" cy="86" rx="7" ry="4.5" fill="#ff8fa0" stroke="none" opacity=".9"/>
-        <ellipse cx="91" cy="86" rx="7" ry="4.5" fill="#ff8fa0" stroke="none" opacity=".9"/>
+        <path d="M37.5 58 A12.5 12.5 0 0 1 62.5 58 Q50 54 37.5 58 Z" fill="#f4c7a1" stroke-width="3"/>
+        <path d="M67 57 A9 9 0 0 1 85 57 Q76 54 67 57 Z" fill="#f4c7a1" stroke-width="3"/>
+        <ellipse cx="38" cy="76" rx="7" ry="4.5" fill="#ff7f8f" stroke="none" opacity=".9"/>
+        <ellipse cx="88" cy="74" rx="6" ry="4" fill="#ff7f8f" stroke="none" opacity=".9"/>
       </g>
       <g class="brows">
-        <path class="brow-l" d="M37 43 Q46 37 56 41" stroke-width="6" fill="none"/>
-        <path class="brow-r" d="M68 41 Q78 37 87 43" stroke-width="6" fill="none"/>
+        <path class="brow-l" d="M38 41 Q48 33 60 40" stroke-width="5.5" fill="none"/>
+        <path class="brow-r" d="M69 46 Q77 42 86 46" stroke-width="5.5" fill="none"/>
       </g>
+      <!-- nez -->
+      <path d="M63 62 Q69 68 62 71" stroke-width="3" fill="none"/>
       <!-- bouches -->
-      <g class="m-smile"><path d="M44 89 Q62 112 80 89 Z" fill="#000" stroke-width="4"/><path d="M48 91 L76 91 L74 96 L50 96 Z" fill="#fff" stroke="none"/><path d="M55 104 Q62 99 69 104 Q62 107 55 104 Z" fill="#ff6b73" stroke="none"/></g>
-      <g class="m-open"><ellipse cx="62" cy="96" rx="9" ry="11" fill="#000" stroke-width="3"/><ellipse cx="62" cy="102" rx="5" ry="3.5" fill="#ff6b73" stroke="none"/></g>
-      <path class="m-sad" d="M49 101 Q62 88 75 101" stroke-width="4.5" fill="none"/>
-      <path class="m-wavy" d="M48 96 q3.5 -4 7 0 t7 0 t7 0 t7 0" stroke-width="4" fill="none"/>
-      <!-- nœud papillon -->
-      <path d="M62 116 L48 108 L48 124 Z M62 116 L76 108 L76 124 Z" fill="#f4f2f0" stroke-width="3.5"/>
-      <circle cx="62" cy="116" r="4" fill="#000" stroke="none"/>
+      <g class="m-smile"><path d="M38 75 Q62 102 89 73 Q62 81 38 75 Z" fill="#000" stroke-width="3.5"/><path d="M42 77.5 Q62 83 85 75.5 L83.5 80 Q62 87 43.5 82 Z" fill="#fff" stroke="none"/><path d="M54 92 Q63 86 72 91 Q63 95 54 92 Z" fill="#ff6b73" stroke="none"/></g>
+      <g class="m-open"><ellipse cx="63" cy="84" rx="10" ry="11" fill="#000" stroke-width="3"/><ellipse cx="63" cy="90" rx="6" ry="4" fill="#ff6b73" stroke="none"/></g>
+      <path class="m-sad" d="M48 90 Q63 77 78 90" stroke-width="4.5" fill="none"/>
+      <path class="m-wavy" d="M46 84 q4 -4 8 0 t8 0 t8 0 t8 0" stroke-width="4" fill="none"/>
     </g></g>
     <g class="sparkles">
       <g transform="translate(4 18)"><path class="spark" d="M0 -9 L2.5 -2.5 L9 0 L2.5 2.5 L0 9 L-2.5 2.5 L-9 0 L-2.5 -2.5 Z" fill="#f4f2f0" stroke="#000" stroke-width="2"/></g>
-      <g transform="translate(118 10)"><path class="spark s2" d="M0 -7 L2 -2 L7 0 L2 2 L0 7 L-2 2 L-7 0 L-2 -2 Z" fill="#e2232e" stroke="#000" stroke-width="2"/></g>
-      <g transform="translate(124 104)"><path class="spark s3" d="M0 -8 L2 -2 L8 0 L2 2 L0 8 L-2 2 L-8 0 L-2 -2 Z" fill="#f4f2f0" stroke="#000" stroke-width="2"/></g>
+      <g transform="translate(122 24)"><path class="spark s2" d="M0 -7 L2 -2 L7 0 L2 2 L0 7 L-2 2 L-7 0 L-2 -2 Z" fill="#e2232e" stroke="#000" stroke-width="2"/></g>
+      <g transform="translate(124 108)"><path class="spark s3" d="M0 -8 L2 -2 L8 0 L2 2 L0 8 L-2 2 L-8 0 L-2 -2 Z" fill="#f4f2f0" stroke="#000" stroke-width="2"/></g>
     </g>
     <g class="drunk-only hic" fill="#f4f2f0" stroke="#000" stroke-width="2">
-      <circle cx="104" cy="40" r="4"/><circle class="h2" cx="110" cy="30" r="5.5"/><circle class="h3" cx="104" cy="18" r="3"/>
+      <circle cx="100" cy="30" r="4"/><circle class="h2" cx="108" cy="18" r="5.5"/><circle class="h3" cx="102" cy="4" r="3"/>
     </g>
   </svg>
 </div>
@@ -1340,7 +1382,8 @@ function render() {
 /* ---------- Mascotte ---------- */
 const mascotEl = document.getElementById("mascot");
 const mascotLine = document.getElementById("mascotLine");
-let mascotKey = null, mascotTimer = null;
+let mascotKey = null, mascotTimer = null, mascotPos = "pos-br";
+const POSITIONS = ["pos-br", "pos-bl", "pos-tr", "pos-tl", "pos-mr", "pos-ml"];
 
 // Humeur et réplique selon l'écran affiché
 function mood() {
@@ -1377,14 +1420,19 @@ function react() {
   const key = S.rules ? "rules" : [S.screen, S.turn, S.current ? S.current.t + "-" + S.current.c : ""].join("|");
   if (key === mascotKey) return;
   mascotKey = key;
-  const [m, line] = mood();
   clearTimeout(mascotTimer);
+  if (S.screen === "home" && !S.rules) { mascotEl.className = "mascot"; return; } // la mascotte est déjà en grand sur l'accueil
+  const [m, line] = mood();
   const drunk = hard() && S.screen !== "home";
   mascotLine.textContent = drunk && line ? slur(line) : line;
   mascotLine.hidden = !line;
-  mascotEl.className = "mascot " + m + (drunk ? " drunk" : "");
+  mascotPos = pick(POSITIONS.filter(x => x !== mascotPos));
+  mascotEl.className = "mascot " + m + (drunk ? " drunk" : "") + " " + mascotPos;
   void mascotEl.offsetWidth; // relance l'animation d'entrée
   mascotEl.classList.add("show");
+  // Petite secousse de l'écran à l'arrivée de la mascotte
+  document.body.classList.remove("jolt");
+  setTimeout(() => { document.body.classList.add("jolt"); setTimeout(() => document.body.classList.remove("jolt"), 300); }, 170);
   mascotTimer = setTimeout(() => {
     mascotEl.classList.replace("show", "leave");
   }, 2600);
@@ -1443,31 +1491,28 @@ function rules() {
 function home() {
   const saved = load();
   const resume = saved && ["board", "question", "verdict"].includes(saved.screen);
-  return `<section class="screen">
-    <div class="stack">
-      <span class="eyebrow">Quiz entre amis</span>
-      <h1>Le Risque <span>Tout</span></h1>
-      <p class="lead">Choisissez une question de x1 à x5 selon la difficulté. Bonne réponse, vous gagnez. Mauvaise réponse, vous perdez. Et si vous osez le Risque Tout…</p>
+  return `<section class="screen home">
+    <div class="hero">
+      <h1 class="hero-title"><span class="t1">Le Risque</span><span class="t2">Tout</span></h1>
+      <div class="hero-bubble pop" id="heroLine">Prêts à tout risquer ?</div>
+      <div class="hero-stage">
+        <div class="rays" aria-hidden="true"></div>
+        <button class="mascot hero show wave" id="heroMascot" aria-label="Faire réagir la mascotte">
+          ${document.querySelector("#mascot svg").outerHTML}
+        </button>
+      </div>
+      <p class="hero-tag">Le quiz où l'on peut tout gagner… ou tout perdre.</p>
     </div>
     <div class="modes">
       <button class="mode" data-mode="classique">
-        <span class="tag">Points</span>
+        <span class="tag">Des points</span>
         <span class="name">Classique</span>
-        <ul>
-          <li>Bonne réponse : + les points de la case</li>
-          <li>Mauvaise réponse : − les points de la case</li>
-          <li>Risque Tout : score doublé, ou remis à zéro</li>
-        </ul>
+        <span class="mode-line">Gagnez des points, doublez-les au Risque Tout… ou retombez à zéro.</span>
       </button>
       <button class="mode hard" data-mode="hardcore">
         <span class="tag">Jeu à boire</span>
         <span class="name">Hardcore</span>
-        <ul>
-          <li>Bonne réponse : vous distribuez les gorgées</li>
-          <li>Mauvaise réponse : elles s'ajoutent à votre reste à boire</li>
-          <li>Risque Tout : un cul sec, donné ou reçu</li>
-          <li>Mega Risque Tout : reste à boire effacé, ou doublé</li>
-        </ul>
+        <span class="mode-line">Des gorgées à donner ou à boire, des culs secs et le Mega Risque Tout.</span>
       </button>
     </div>
     <div class="actions">
@@ -1476,6 +1521,24 @@ function home() {
     </div>
     <p class="fine">Mode Hardcore réservé aux majeurs. L'abus d'alcool est dangereux pour la santé, à consommer avec modération.</p>
   </section>`;
+}
+
+// Mascotte géante de l'accueil : on la touche, elle réagit
+const HERO_MOODS = [
+  ["cheer", "On y va ?!"], ["shock", "Tu vas tout risquer ?"], ["think", "J'ai une question pour toi…"],
+  ["cheer", "Le maître du jeu, c'est le patron !"], ["shock", "Pas sur le nez !"], ["point", "Choisis ton mode, là, en dessous !"],
+  ["sad", "Personne ne veut jouer avec moi ?"], ["wave", "Coucou !"],
+];
+function poke() {
+  const el = document.getElementById("heroMascot");
+  if (!el) return;
+  const [m, line] = pick(HERO_MOODS.filter(x => x[1] !== document.getElementById("heroLine").textContent));
+  const bubble = document.getElementById("heroLine");
+  bubble.textContent = line;
+  bubble.classList.remove("pop"); void bubble.offsetWidth; bubble.classList.add("pop");
+  el.className = "mascot hero " + m;
+  void el.offsetWidth;
+  el.classList.add("show");
 }
 
 function players() {
@@ -1804,6 +1867,8 @@ function answer(ok) {
 
 function bind() {
   app.querySelectorAll("[data-act]").forEach(b => b.onclick = ACTS[b.dataset.act]);
+  const hero = document.getElementById("heroMascot");
+  if (hero) hero.onclick = poke;
   app.querySelectorAll("[data-mode]").forEach(b => b.onclick = () => { const p = S.players; S = fresh(); S.players = p; S.mode = b.dataset.mode; go("players"); });
   app.querySelectorAll("[data-player]").forEach(inp => inp.oninput = () => { S.players[+inp.dataset.player] = inp.value; save(); });
   app.querySelectorAll("[data-remove]").forEach(b => b.onclick = () => { S.players.splice(+b.dataset.remove, 1); refresh(); });

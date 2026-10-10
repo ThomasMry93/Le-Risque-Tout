@@ -26,7 +26,7 @@ Le mode Hardcore est réservé aux majeurs. L'abus d'alcool est dangereux pour l
 - Valeurs des cases réglables (points, gorgées, culs secs du Risque Tout)
 - Scores et « reste à boire » ajustables à la main
 - Thèmes déjà joués signalés (indicateur masquable, historique effaçable)
-- Mascotte animée, éméchée en mode Hardcore
+- Mascotte animateur de jeu télé : en grand sur l'accueil (elle réagit quand on la touche), puis surgit à chaque écran à un endroit différent ; éméchée en mode Hardcore
 - Web app installable (« Ajouter à l'écran d'accueil ») qui fonctionne hors connexion
 
 ## Fichiers
