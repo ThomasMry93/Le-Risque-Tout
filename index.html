@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Le Risque Tout</title>
 <meta name="description" content="Le Risque Tout : quiz de soirée avec un maître du jeu, en mode Classique ou Hardcore.">
 <meta name="theme-color" content="#0e0d0d">
@@ -54,6 +54,9 @@ body {
 }
 .wrap { max-width: 920px; margin: 0 auto; padding-block: 24px 48px; display: grid; gap: 24px; }
 button { font: inherit; color: inherit; }
+/* Pas de zoom : pas de double-tap zoom, et des champs à 16 px pour que l'iPhone ne zoome pas à la saisie */
+html { touch-action: manipulation; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+input, textarea { font-size: 16px !important; }
 h1 { margin: 0; font-family: var(--f-label); font-size: clamp(2rem, 8vw, 3.4rem); text-transform: uppercase; line-height: .95; letter-spacing: .01em; text-wrap: balance; }
 h1 span { color: var(--red); }
 h2 { margin: 0; font-family: var(--f-label); text-transform: uppercase; letter-spacing: .04em; font-size: 1.15rem; }
@@ -337,7 +340,7 @@ body.jolt #app { animation: jolt .28s linear; }
 }
 </style>
 
-<div class="wrap" id="app"></div>
+<div class="wrap" id="app"></div><p>Tourne ton téléphone !</p><small>Le Risque Tout se joue en mode portrait.</small></div>
 
 <div class="mascot" id="mascot" aria-hidden="true">
   <div class="bubble" id="mascotLine"></div>
@@ -2031,6 +2034,10 @@ function bind() {
     const i = +b.dataset.target; S.drink[i].c += S.result.v; S.result.target = i; refresh();
   });
 }
+
+// Bloque le zoom à deux doigts (Safari ignore l'interdiction posée dans la balise viewport)
+["gesturestart", "gesturechange", "gestureend"].forEach(ev => document.addEventListener(ev, e => e.preventDefault(), { passive: false }));
+document.addEventListener("touchmove", e => { if (e.touches.length > 1 || (e.scale !== undefined && e.scale !== 1)) e.preventDefault(); }, { passive: false });
 
 function start(data) {
   if (data && data.S) {
