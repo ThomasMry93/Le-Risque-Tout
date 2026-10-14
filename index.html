@@ -1714,6 +1714,7 @@ function mine() {
     ${la && shown.length ? `<div class="played-bar"><span class="hint-line">Ces ${plural(shown.length, "thème", "thèmes")} seulement :</span>
       <span class="top-links"><button class="btn small" data-act="exportGroup">Exporter (${shown.length})</button>${own ? `<button class="btn small" data-act="shareGroup">Partager en ligne (${own})</button>` : ""}</span></div>` : ""}`
     : `<div class="adder"><p class="empty">Aucun thème perso pour l'instant. Créez le premier : un nom, puis 6 questions de la plus facile à la plus difficile (7 pour le mode Hardcore). Vous pouvez aussi récupérer les thèmes partagés par les autres joueurs, plus bas.</p></div>`}
+    ${trashPanel()}
     <div class="actions">
       <button class="btn ghost" data-act="closeMine">Retour</button>
       <button class="btn primary" data-act="newCustom">Créer un thème</button>
@@ -1770,7 +1771,9 @@ function editor() {
 // Supprime un thème perso et décale les numéros des thèmes qui le suivent dans la partie en cours
 function deleteCustom(id) {
   const oi = THEMES.findIndex(t => t.custom === id);
-  skipCloud(custom.find(c => c.id === id));
+  const gone = custom.find(c => c.id === id);
+  skipCloud(gone);
+  if (gone) { trash = [{ ...gone, deletedAt: Date.now() }, ...trash.filter(x => x.id !== id)]; saveTrash(); }
   custom = custom.filter(c => c.id !== id);
   saveCustom();
   const shift = i => i > oi ? i - 1 : i;
@@ -1785,7 +1788,16 @@ function deleteCustom(id) {
 const CLOUD_URL = "https://risque-tout-themes.thomas-morey.workers.dev";
 // Clé d'accès pour partager : seules ses empreintes sont écrites ici (mêmes que KEY_HASHES du serveur)
 const KEY_SALT = "le-risque-tout/2026";
-const KEY_HASHES = ["6e15144c93c5f57f1b7784e00782d7caa007b453378c4eeb44caf894b70f5e8f"];
+const KEY_HASHES = [
+  "6e15144c93c5f57f1b7784e00782d7caa007b453378c4eeb44caf894b70f5e8f", // clé du Risque Tout
+  "d60fc99e960f62e94ca008aed677171bfcb9a163114c6d21198c985997670cec", // clé 1
+  "dbab62dfec1f5aaa36eb21377398bb494fbf9adbcd33b936d38276b9c1a38210", // clé 2
+  "91fb0bde8ef658cb5b2515bc5914321163a7fc12834a2da4a29e9bd516b5f532", // clé 3
+  "b377c18313c57637df3b56e59e907be16fbb71bb538edfff650ec4632da8b8a9", // clé 4
+  "1f1ce4ddaa27f206cc8fb3ecf0d15f2ab61e06b72329d5e96f9b0b1436ae1b9c", // clé 5
+  "ad08bdd4aff1c37ada069b13640e0db69bbc1905380a6a77c3fb37679cd908ee", // code de secours 1
+  "33244883e77dcc4ef9d0205447b819d60c1d2471e3c7dfac1ed7d5ad46621323", // code de secours 2
+];
 const KEY_STORE = "risque-tout-cle", AUTHOR_STORE = "risque-tout-createur", SKIP_STORE = "risque-tout-partages-supprimes";
 const lsGet = (k, d) => { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } };
 const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
@@ -1811,6 +1823,34 @@ function skipCloud(c) { if (c && c.cloud) { const k = String(c.cloudId || c.id);
   custom = custom.filter(c => { if (!c.cloud) return true; const k = dupKey(c); if (seen.has(k) || ids.has(c.id)) return false; seen.add(k); ids.add(c.id); return true; });
   if (custom.length !== before) { saveCustom(); rebuildThemes(); }
 })();
+
+// Corbeille : les thèmes perso supprimés y restent pour pouvoir les récupérer (100 au plus)
+const TRASH = "risque-tout-corbeille";
+let trash = (() => { try { return JSON.parse(lsGet(TRASH, "[]")) || []; } catch (e) { return []; } })();
+const saveTrash = () => lsSet(TRASH, JSON.stringify(trash.slice(0, 100)));
+function restoreTheme(id) {
+  const t = trash.find(x => x.id === id); if (!t) return 0;
+  trash = trash.filter(x => x.id !== id); saveTrash();
+  const { deletedAt, ...c } = t;
+  if (c.cloud) { cloudSkip = cloudSkip.filter(k => k !== String(c.cloudId || c.id)); saveSkip(); }
+  if (custom.some(x => dupKey(x) === dupKey(c))) return 0;
+  if (custom.some(x => x.id === c.id)) c.id = "c" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  custom.push(c); return 1;
+}
+function trashPanel() {
+  if (!trash.length) return "";
+  if (!S.trashOpen) return `<button class="btn ghost small" style="justify-self:center" data-act="toggleTrash">Récupérer les thèmes supprimés (${trash.length})</button>`;
+  return `<div class="adder" id="trashpanel">
+    <div class="editor-head">Thèmes supprimés<button class="link" data-act="toggleTrash">Fermer</button></div>
+    <div class="mine-list">${trash.map(t => `<div class="mine-row">
+      <div class="mine-info"><span class="family-name">${esc(t.name)}${t.cloud ? ` <small class="perso">partagé</small>` : ""}</span><span class="hint-line">${authOf(t) ? `par ${esc(authOf(t))} · ` : ""}supprimé le ${new Date(t.deletedAt).toLocaleDateString("fr-FR")}</span></div>
+      <button class="btn small" data-restore="${esc(t.id)}">Récupérer</button>
+    </div>`).join("")}</div>
+    ${S.confirmEmpty
+      ? `<div class="actions"><button class="btn ghost small" data-act="emptyNo">Annuler</button><button class="btn primary small" data-act="emptyYes">Effacer définitivement</button></div>`
+      : `<div class="actions"><button class="btn small" data-act="restoreAll">Tout récupérer</button><button class="link" data-act="emptyAsk">Vider la corbeille</button></div>`}
+  </div>`;
+}
 
 // Thème lu dans un fichier ou dans la collection : nettoyé, ou null s'il est incomplet
 function cleanTheme(c) {
@@ -2155,8 +2195,17 @@ const ACTS = {
     r.done = true; refresh();
   },
   end: () => go("end"),
-  openMine: () => { S.back = S.screen; S.confirmDel = null; S.mauth = ""; S.pick = null; S.askKey = false; go("mine"); },
+  openMine: () => { S.back = S.screen; S.confirmDel = null; S.trashOpen = false; S.confirmEmpty = false; S.mauth = ""; S.pick = null; S.askKey = false; go("mine"); },
   closeMine: () => go(S.back && S.back !== "mine" && S.back !== "editor" ? S.back : "home"),
+  toggleTrash: () => { S.trashOpen = !S.trashOpen; S.confirmEmpty = false; refresh(); },
+  restoreAll: () => {
+    const n = [...trash].map(t => restoreTheme(t.id)).reduce((a, b) => a + b, 0);
+    saveCustom(); rebuildThemes(); S.trashOpen = false; refresh();
+    toast(n ? `${plural(n, "thème récupéré", "thèmes récupérés")}` : "Ces thèmes sont déjà dans le jeu");
+  },
+  emptyAsk: () => { S.confirmEmpty = true; refresh(); },
+  emptyNo: () => { S.confirmEmpty = false; refresh(); },
+  emptyYes: () => { trash = []; saveTrash(); S.confirmEmpty = false; S.trashOpen = false; refresh(); toast("Corbeille vidée"); },
   toggleCopy: () => { S.copyOpen = !S.copyOpen; refresh(); },
   newCustom: () => { S.copyOpen = false;  S.draft = { id: null, name: "", author: lsGet(AUTHOR_STORE, ""), q: SLOT_LABELS.map(() => ["", ""]) }; S.draftError = ""; go("editor"); },
   getCloud: () => getCloud(),
@@ -2254,6 +2303,11 @@ function bind() {
   app.querySelectorAll("[data-mode]").forEach(b => b.onclick = () => { const p = S.players; S = fresh(); S.players = p; S.mode = b.dataset.mode; go("players"); });
   app.querySelectorAll("[data-player]").forEach(inp => inp.oninput = () => { S.players[+inp.dataset.player] = inp.value; save(); });
   app.querySelectorAll("[data-remove]").forEach(b => b.onclick = () => { S.players.splice(+b.dataset.remove, 1); refresh(); });
+  app.querySelectorAll("[data-restore]").forEach(b => b.onclick = () => {
+    const t = trash.find(x => x.id === b.dataset.restore), n = restoreTheme(b.dataset.restore);
+    saveCustom(); rebuildThemes(); if (!trash.length) S.trashOpen = false; refresh();
+    toast(n ? `« ${t.name} » est de retour dans vos thèmes` : `« ${t.name} » est déjà dans le jeu`);
+  });
   app.querySelectorAll("[data-copy]").forEach(b => b.onclick = () => {
     const i = +b.dataset.copy, d = S.draft;
     d.q = SLOT_LABELS.map((_, k) => [...(THEMES[i].q[k] || ["", ""])]);
@@ -2303,8 +2357,11 @@ document.addEventListener("touchmove", e => { if (e.touches.length > 1 || (e.sca
 
 /* ---------- Bandeau de mise à jour ----------
    À chaque version publiée : changer APP_VERSION et ajouter ses nouveautés en tête de CHANGELOG. */
-const APP_VERSION = "9";
+const APP_VERSION = "10";
 const CHANGELOG = [
+  { v: "10", date: "14 octobre 2026", items: [
+    "Thème supprimé par erreur ? Dans « Mes thèmes », le bouton « Récupérer les thèmes supprimés » le remet en place.",
+  ]},
   { v: "9", date: "14 octobre 2026", items: [
     "Créer un thème : le bouton « Repartir d'un thème existant » pré-remplit le nom, les questions et les réponses, à modifier ensuite.",
   ]},

@@ -15,7 +15,14 @@
 // Empreintes des clés d'accès (mêmes que KEY_HASHES dans le jeu). Les clés elles-mêmes ne sont pas ici.
 const KEY_SALT = "le-risque-tout/2026";
 const KEY_HASHES = [
-  "6e15144c93c5f57f1b7784e00782d7caa007b453378c4eeb44caf894b70f5e8f",
+  "6e15144c93c5f57f1b7784e00782d7caa007b453378c4eeb44caf894b70f5e8f", // clé du Risque Tout
+  "d60fc99e960f62e94ca008aed677171bfcb9a163114c6d21198c985997670cec", // clé 1
+  "dbab62dfec1f5aaa36eb21377398bb494fbf9adbcd33b936d38276b9c1a38210", // clé 2
+  "91fb0bde8ef658cb5b2515bc5914321163a7fc12834a2da4a29e9bd516b5f532", // clé 3
+  "b377c18313c57637df3b56e59e907be16fbb71bb538edfff650ec4632da8b8a9", // clé 4
+  "1f1ce4ddaa27f206cc8fb3ecf0d15f2ab61e06b72329d5e96f9b0b1436ae1b9c", // clé 5
+  "ad08bdd4aff1c37ada069b13640e0db69bbc1905380a6a77c3fb37679cd908ee", // code de secours 1
+  "33244883e77dcc4ef9d0205447b819d60c1d2471e3c7dfac1ed7d5ad46621323", // code de secours 2
 ];
 
 const STORE_KEY = "themes"; // toute la collection tient dans une seule entrée KV (lecture en un coup)
