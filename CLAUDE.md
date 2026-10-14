@@ -5,6 +5,7 @@
 - Questions : chaque série a exactement 7 entrées `[question, réponse]` dans l'ordre x1, x2, x3, x4, x5, Risque Tout, Mega Risque Tout (Hardcore seulement), de la plus facile à la plus difficile. Les séries d'une même famille sont numérotées automatiquement (`Sport 1`, `Sport 2`…). Ajouter les nouvelles séries **à la fin** de `BUILTIN` : l'historique « déjà joué » repose sur ces noms.
 - Thèmes perso : créés dans l'écran « Mes thèmes », stockés dans le `localStorage` du téléphone (clé `risque-tout-perso`) et ajoutés après `BUILTIN`. Le Mega Risque Tout y est facultatif.
 - Questions cadeau : constante `EASY`, tirées pour environ un thème sur cinq (`EASY_RATE`).
-- À chaque mise à jour publiée, incrémenter `VERSION` dans `sw.js` pour que les téléphones récupèrent la nouvelle version.
+- À chaque mise à jour publiée : incrémenter `VERSION` dans `sw.js`, passer `APP_VERSION` au même numéro dans `index.html` et ajouter en tête de `CHANGELOG` les nouveautés, en phrases simples pour les joueurs (elles s'affichent dans le bandeau après la mise à jour).
+- Mises à jour : le service worker télécharge la nouvelle version en arrière-plan mais ne l'installe que lorsque le joueur appuie sur « Mettre à jour » dans le bandeau.
 - Façon de travailler : préparer et tester les changements dans Claude, et n'envoyer sur GitHub qu'après l'accord de l'utilisateur.
 - Ne jamais toucher au dépôt Vingt-Indices depuis ce projet.

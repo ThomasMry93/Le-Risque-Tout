@@ -110,6 +110,16 @@ button:focus-visible, input:focus-visible { outline: 3px solid var(--ink); outli
 .mode-line { font-weight: 600; font-size: .9rem; line-height: 1.4; }
 .mode { align-content: center; }
 
+/* Bandeau de mise à jour */
+.update { position: fixed; left: 0; right: 0; top: 0; z-index: 80; padding: calc(12px + env(safe-area-inset-top, 0px)) 16px 14px; background: var(--red); color: var(--ink); border-bottom: 4px solid #000; box-shadow: 0 8px 24px rgba(0,0,0,.6); animation: upd-in .45s cubic-bezier(.2,1.4,.4,1); }
+.update-in { max-width: 760px; margin: 0 auto; display: grid; grid-template-columns: 1fr auto; gap: 6px 14px; align-items: start; }
+.update h3 { margin: 0; font-family: var(--f-score); font-weight: 400; font-size: 1.3rem; line-height: 1.1; text-transform: uppercase; }
+.update h3 small { display: block; margin-top: 4px; font-family: var(--f-label); font-size: .7rem; letter-spacing: .08em; opacity: .85; }
+.update ul { grid-column: 1 / -1; margin: 0; padding-left: 1.1em; display: grid; gap: 3px; font-weight: 700; font-size: .9rem; line-height: 1.35; }
+.update .btn { background: #000; border-color: #000; padding: 9px 16px; font-size: .78rem; }
+@keyframes upd-in { from { transform: translateY(-110%); } to { transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) { .update { animation: none; } }
+
 /* Mes thèmes */
 .mine-list { display: grid; gap: 0; }
 .mine-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 0; border-top: 1px solid var(--line); flex-wrap: wrap; }
@@ -341,6 +351,8 @@ body.jolt #app { animation: jolt .28s linear; }
 </style>
 
 <div class="wrap" id="app"></div>
+
+<div class="update" id="update" role="status" hidden></div>
 
 <div class="mascot" id="mascot" aria-hidden="true">
   <div class="bubble" id="mascotLine"></div>
@@ -2039,7 +2051,61 @@ function bind() {
 ["gesturestart", "gesturechange", "gestureend"].forEach(ev => document.addEventListener(ev, e => e.preventDefault(), { passive: false }));
 document.addEventListener("touchmove", e => { if (e.touches.length > 1 || (e.scale !== undefined && e.scale !== 1)) e.preventDefault(); }, { passive: false });
 
+/* ---------- Bandeau de mise à jour ----------
+   À chaque version publiée : changer APP_VERSION et ajouter ses nouveautés en tête de CHANGELOG. */
+const APP_VERSION = "7";
+const CHANGELOG = [
+  { v: "7", date: "14 octobre 2026", items: [
+    "Ce bandeau présente désormais les nouveautés de chaque mise à jour.",
+    "Les prochaines mises à jour s'installeront quand vous appuierez sur « Mettre à jour ».",
+    "Thèmes perso : créez vos propres thèmes et questions avec le bouton « Mes thèmes ».",
+    "Le zoom est bloqué sur téléphone, pour ne plus agrandir l'écran par erreur.",
+  ]},
+];
+const SEEN = "risque-tout-version-vue";
+const updEl = document.getElementById("update");
+function closeUpdate() { updEl.hidden = true; try { localStorage.setItem(SEEN, APP_VERSION); } catch (e) {} }
+function showChangelog() {
+  const last = CHANGELOG[0];
+  updEl.innerHTML = `<div class="update-in"><h3>Mise à jour !<small>version ${last.v} · ${last.date}</small></h3>
+    <button class="btn" id="updOk">Compris</button>
+    <ul>${last.items.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>`;
+  updEl.hidden = false;
+  document.getElementById("updOk").onclick = closeUpdate;
+}
+// Appelée par la page publiée quand une nouvelle version est téléchargée : elle ne s'installe qu'avec le bouton
+window.showUpdateReady = apply => {
+  updEl.innerHTML = `<div class="update-in"><h3>Mise à jour disponible<small>Une nouvelle version du jeu est prête</small></h3>
+    <button class="btn" id="updGo">Mettre à jour</button>
+    <ul><li>La partie en cours est conservée.</li></ul></div>`;
+  updEl.hidden = false;
+  document.getElementById("updGo").onclick = () => {
+    document.getElementById("updGo").textContent = "Mise à jour…";
+    try { sessionStorage.setItem("risque-tout-reprise", "1"); } catch (e) {}
+    apply ? apply() : location.reload();
+  };
+};
+(() => {
+  let seen = null;
+  try {
+    seen = localStorage.getItem(SEEN);
+    // Joueurs d'avant ce bandeau : ils ont déjà une partie ou un historique, on leur montre les nouveautés
+    if (seen === null && [STORE, PLAYED, CUSTOM].some(k => localStorage.getItem(k) !== null)) seen = "6";
+  } catch (e) {}
+  // Première visite : rien à annoncer, on note simplement la version
+  if (seen === null) { try { localStorage.setItem(SEEN, APP_VERSION); } catch (e) {} return; }
+  if (seen !== APP_VERSION) showChangelog();
+})();
+
 function start(data) {
+  // Après « Mettre à jour », on retrouve l'écran où l'on était
+  try {
+    if (sessionStorage.getItem("risque-tout-reprise")) {
+      sessionStorage.removeItem("risque-tout-reprise");
+      const saved = load();
+      if (saved) data = { S: saved };
+    }
+  } catch (e) {}
   if (data && data.S) {
     S = Object.assign(fresh(), data.S);
     if (S.drink.length !== S.players.length) S.drink = S.players.map(() => ({ s: 0, c: 0 }));
@@ -2051,7 +2117,25 @@ window.claude?.hot?.snapshot?.(() => ({ S }));
 window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? {});
 </script>
 <script>
-if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+// Mises à jour : la nouvelle version est proposée dans le bandeau, et installée seulement sur demande
+if ("serviceWorker" in navigator) window.addEventListener("load", () => {
+  let asked = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => { if (asked) location.reload(); });
+  navigator.serviceWorker.register("sw.js").then(reg => {
+    const offer = w => window.showUpdateReady && window.showUpdateReady(() => { asked = true; w.postMessage("skipWaiting"); });
+    if (reg.waiting && navigator.serviceWorker.controller) offer(reg.waiting);
+    reg.addEventListener("updatefound", () => {
+      const w = reg.installing;
+      if (w) w.addEventListener("statechange", () => {
+        // On attend un instant : une version qui s'installe d'elle-même n'a pas besoin du bandeau
+        if (w.state === "installed" && navigator.serviceWorker.controller) setTimeout(() => { if (reg.waiting === w) offer(w); }, 1500);
+      });
+    });
+    const check = () => reg.update().catch(() => {});
+    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") check(); });
+    setInterval(check, 30 * 60 * 1000);
+  }).catch(() => {});
+});
 </script>
 </body>
 </html>
