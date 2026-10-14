@@ -1650,7 +1650,8 @@ function adder() {
 }
 
 // Liste des thèmes restants, regroupés par famille et triés par ordre alphabétique
-function picker(left) {
+// Liste des thèmes par famille ; « copy » sert à repartir d'un thème existant dans l'éditeur
+function picker(left, copy) {
   const fams = {};
   left.forEach(i => (fams[THEMES[i].family] = fams[THEMES[i].family] || []).push(i));
   const names = Object.keys(fams).sort((a, b) => a.localeCompare(b, "fr"));
@@ -1659,7 +1660,7 @@ function picker(left) {
       const multi = THEMES.filter(t => t.family === f).length > 1;
       return `<div class="family" data-family="${esc(f.toLowerCase())}">
         <span class="family-name">${esc(f)}${fams[f].some(i => THEMES[i].custom) ? ` <small class="perso">perso</small>` : ""}</span>
-        <div class="family-series">${fams[f].map(i => `<button class="chip mini ${showPlayed(i) ? "played" : ""}" data-add="${i}" aria-label="Ajouter ${NAMES[i]}${showPlayed(i) ? ", déjà joué" : ""}">${multi ? NAMES[i].slice(f.length + 1) : "+"}</button>`).join("")}</div>
+        <div class="family-series">${fams[f].map(i => `<button class="chip mini ${showPlayed(i) ? "played" : ""}" ${copy ? "data-copy" : "data-add"}="${i}" aria-label="${copy ? "Repartir de" : "Ajouter"} ${NAMES[i]}${showPlayed(i) ? ", déjà joué" : ""}">${multi ? NAMES[i].slice(f.length + 1) : "+"}</button>`).join("")}</div>
       </div>`;
     }).join("")}</div>`;
 }
@@ -1743,6 +1744,10 @@ function editor() {
       <h2>${d.id ? esc(d.name || "Mon thème") : "Créer un thème"}</h2>
       <p class="lead">Classez les questions de la plus facile (x1) à la plus difficile. Le Mega Risque Tout ne sert qu'en Hardcore : sans lui, sa case reste fermée.</p>
     </div>
+    ${d.id ? "" : `<div class="adder">
+      <button class="btn ${S.copyOpen ? "light" : ""} small" style="justify-self:start" data-act="toggleCopy">Repartir d'un thème existant</button>
+      ${S.copyOpen ? `<p class="hint-line">Choisissez un thème : son nom, ses questions et ses réponses rempliront les cases ci-dessous, à modifier ensuite à votre guise.</p>${picker(THEMES.map((_, i) => i), true)}` : ""}
+    </div>`}
     <div class="adder">
       <label class="eyebrow" for="draftName">Nom du thème</label>
       <input id="draftName" class="search" maxlength="30" placeholder="Ex. : Nos souvenirs de vacances" value="${esc(d.name)}" data-draft="name">
@@ -2152,7 +2157,8 @@ const ACTS = {
   end: () => go("end"),
   openMine: () => { S.back = S.screen; S.confirmDel = null; S.mauth = ""; S.pick = null; S.askKey = false; go("mine"); },
   closeMine: () => go(S.back && S.back !== "mine" && S.back !== "editor" ? S.back : "home"),
-  newCustom: () => { S.draft = { id: null, name: "", author: lsGet(AUTHOR_STORE, ""), q: SLOT_LABELS.map(() => ["", ""]) }; S.draftError = ""; go("editor"); },
+  toggleCopy: () => { S.copyOpen = !S.copyOpen; refresh(); },
+  newCustom: () => { S.copyOpen = false;  S.draft = { id: null, name: "", author: lsGet(AUTHOR_STORE, ""), q: SLOT_LABELS.map(() => ["", ""]) }; S.draftError = ""; go("editor"); },
   getCloud: () => getCloud(),
   shareCloud: () => shareCloud(null),
   shareGroup: () => { const la = S.mauth || ""; shareCloud(custom.filter(c => !c.cloud && (authOf(c) || NOAUTH) === la).map(c => c.id)); },
@@ -2248,6 +2254,14 @@ function bind() {
   app.querySelectorAll("[data-mode]").forEach(b => b.onclick = () => { const p = S.players; S = fresh(); S.players = p; S.mode = b.dataset.mode; go("players"); });
   app.querySelectorAll("[data-player]").forEach(inp => inp.oninput = () => { S.players[+inp.dataset.player] = inp.value; save(); });
   app.querySelectorAll("[data-remove]").forEach(b => b.onclick = () => { S.players.splice(+b.dataset.remove, 1); refresh(); });
+  app.querySelectorAll("[data-copy]").forEach(b => b.onclick = () => {
+    const i = +b.dataset.copy, d = S.draft;
+    d.q = SLOT_LABELS.map((_, k) => [...(THEMES[i].q[k] || ["", ""])]);
+    d.name = NAMES[i].slice(0, 30);
+    S.copyOpen = false; S.draftError = ""; refresh();
+    document.getElementById("draftName")?.scrollIntoView({ block: "center" });
+    toast(`Questions de « ${NAMES[i]} » reprises : modifiez-les à votre guise`);
+  });
   app.querySelectorAll("[data-add]").forEach(b => b.onclick = () => { addTheme(+b.dataset.add); refresh(); });
   app.querySelectorAll("details.settings").forEach(d => d.ontoggle = () => { S.settingsOpen = d.open; save(); });
   app.querySelectorAll("[data-cfg]").forEach(b => b.onclick = () => {
@@ -2289,8 +2303,11 @@ document.addEventListener("touchmove", e => { if (e.touches.length > 1 || (e.sca
 
 /* ---------- Bandeau de mise à jour ----------
    À chaque version publiée : changer APP_VERSION et ajouter ses nouveautés en tête de CHANGELOG. */
-const APP_VERSION = "8";
+const APP_VERSION = "9";
 const CHANGELOG = [
+  { v: "9", date: "14 octobre 2026", items: [
+    "Créer un thème : le bouton « Repartir d'un thème existant » pré-remplit le nom, les questions et les réponses, à modifier ensuite.",
+  ]},
   { v: "8", date: "14 octobre 2026", items: [
     "Thèmes partagés : dans « Mes thèmes », récupérez les thèmes créés par les autres joueurs et partagez les vôtres.",
     "Chaque thème perso indique son créateur, et vous pouvez trier vos thèmes par créateur.",
