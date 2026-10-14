@@ -140,6 +140,18 @@ textarea.search { border-radius: 16px; resize: vertical; font-family: var(--f-te
 .draft-error { margin: 0; text-align: center; font-weight: 800; color: var(--ink); background: var(--red); border-radius: 14px; padding: 12px 16px; }
 .perso { font-family: var(--f-text); font-weight: 800; text-transform: none; letter-spacing: 0; color: var(--red); font-size: .72rem; }
 
+/* Version démo */
+.lock { display: inline-block; font-family: var(--f-label); font-size: .62rem; letter-spacing: .06em; text-transform: uppercase; background: #000; color: var(--ink); border: 2px solid var(--ink); border-radius: 999px; padding: 2px 8px; vertical-align: middle; }
+.mode.locked, .menu-btn.locked { opacity: .55; }
+.menu-btn.locked small { color: var(--red); }
+.demo-bar { display: grid; justify-items: center; gap: 4px; padding-top: 4px; font-family: var(--f-label); text-transform: uppercase; letter-spacing: .06em; font-size: .75rem; color: var(--muted); }
+.demo-bar .link { font-family: var(--f-text); text-transform: none; letter-spacing: 0; font-size: .95rem; color: var(--ink); }
+.screen > *, .adder > *, .player-row > * { min-width: 0; }
+#unlockKey { width: 100%; }
+.unlock-list { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; font-weight: 600; line-height: 1.45; }
+.unlock-list b { color: var(--ink); }
+.demo-note { border-color: var(--red); }
+
 /* Menu de l'accueil */
 .menu { display: grid; gap: 14px; width: min(100%, 420px); margin: 0 auto; }
 .menu-btn { display: grid; justify-items: center; gap: 2px; font-family: var(--f-label); text-transform: uppercase; letter-spacing: .05em; font-size: 1.15rem; padding: 18px 20px; border-radius: 999px; border: 3px solid var(--red); background: #000; color: var(--ink); cursor: pointer; box-shadow: 4px 5px 0 rgba(0,0,0,.55); transition: transform .12s ease; }
@@ -1425,7 +1437,7 @@ const cfg = () => S.cfg || (S.cfg = defaultCfg());
 const value = m => (hard() ? cfg().sips : cfg().pts)[m - 1];
 const pts = n => plural(n, "point", "points");
 const drinkText = d => (!d.s && !d.c) ? "rien à boire" : [d.s ? sips(d.s) : "", d.c ? shots(d.c) : ""].filter(Boolean).join(" et ");
-const available = () => THEMES.map((_, i) => i).filter(i => !S.themes.includes(i));
+const available = () => (DEMO ? demoIdx() : THEMES.map((_, i) => i)).filter(i => !S.themes.includes(i));
 const missing = (t, c) => !(getQ(t, c) || [""])[0];
 const allUsed = () => S.themes.every(t => slots().every((_, c) => S.used[t + "-" + c] || missing(t, c)));
 
@@ -1434,7 +1446,7 @@ function refresh() { save(); render(); }
 
 /* ---------- Écrans ---------- */
 function render() {
-  const fn = S.rules ? rules : ({ home, modes, players, themes, board, question, verdict, end, mine, editor }[S.screen] || home);
+  const fn = S.rules ? rules : ({ home, modes, unlock, players, themes, board, question, verdict, end, mine, editor }[S.screen] || home);
   app.innerHTML = fn();
   bind();
   react();
@@ -1452,7 +1464,8 @@ function mood() {
   const name = S.players[S.turn] || "";
   switch (S.screen) {
     case "home": return ["wave", "Prêts à tout risquer ?"];
-    case "modes": return ["think", "Classique ou Hardcore ?"];
+    case "modes": return ["think", DEMO ? "Classique pour commencer ?" : "Classique ou Hardcore ?"];
+    case "unlock": return ["point", "Tu as la clé ?"];
     case "players": return ["wave", "Qui ose jouer ?"];
     case "themes": return ["think", "Choisissez bien vos thèmes…"];
     case "board": return ["wave", `À toi, ${name} !`];
@@ -1570,8 +1583,9 @@ function home() {
     <nav class="menu">
       ${resume ? `<button class="menu-btn resume" data-act="resume">Reprendre la partie<small>là où vous l'avez laissée</small></button>` : ""}
       <button class="menu-btn primary" data-act="newGame">Nouvelle partie</button>
-      <button class="menu-btn" data-act="openMine">Thèmes<small>créer, partager, récupérer</small></button>
+      <button class="menu-btn ${DEMO ? "locked" : ""}" data-act="openMine">Thèmes<small>${DEMO ? "créer, partager, récupérer · jeu complet" : "créer, partager, récupérer"}</small></button>
       <button class="menu-btn" data-act="openRules">Règles</button>
+      ${DEMO ? `<div class="demo-bar"><span>Version démo · 5 thèmes</span><button class="link" data-act="openUnlock">Débloquer le jeu complet</button></div>` : ""}
     </nav>
     <p class="fine">Mode Hardcore réservé aux majeurs. L'abus d'alcool est dangereux pour la santé, à consommer avec modération.</p>
   </section>`;
@@ -1589,8 +1603,8 @@ function modes() {
         <span class="name">Classique</span>
         <span class="mode-line">Gagnez des points, doublez-les au Risque Tout… ou retombez à zéro.</span>
       </button>
-      <button class="mode hard" data-mode="hardcore">
-        <span class="tag">Jeu à boire</span>
+      <button class="mode hard ${DEMO ? "locked" : ""}" data-mode="hardcore">
+        <span class="tag">Jeu à boire${DEMO ? ` · ${lockTag}` : ""}</span>
         <span class="name">Hardcore</span>
         <span class="mode-line">Des gorgées à donner ou à boire, des culs secs et le Mega Risque Tout.</span>
       </button>
@@ -1701,8 +1715,9 @@ function themes() {
       ${n ? `<div class="chips">${S.themes.map(i => `<span class="chip on ${showPlayed(i) ? "played" : ""}">${NAMES[i]}${showPlayed(i) ? `<small class="played-tag">déjà joué</small>` : ""}<button data-drop="${i}" aria-label="Retirer ${NAMES[i]}">✕</button></span>`).join("")}</div>` : ""}
       ${adder()}
     </div>
-    ${settings()}
-    <div class="actions"><button class="link" data-act="openMine">Créer ou modifier mes thèmes</button></div>
+    ${DEMO ? `<div class="adder demo-note"><span class="eyebrow">Version démo</span><p class="hint-line">5 thèmes sur ${BUILTIN.length}. Le jeu complet ajoute tous les thèmes, vos thèmes perso et le réglage de la valeur des questions.</p><button class="btn small" style="justify-self:start" data-act="openUnlock">Débloquer le jeu complet</button></div>`
+      : `${settings()}
+    <div class="actions"><button class="link" data-act="openMine">Créer ou modifier mes thèmes</button></div>`}
     <div class="actions">
       <button class="btn ghost" data-act="toPlayers">Retour</button>
       <button class="btn primary" data-act="start" ${n ? "" : "disabled"}>Lancer la partie</button>
@@ -1822,10 +1837,49 @@ const KEY_HASHES = [
   "33244883e77dcc4ef9d0205447b819d60c1d2471e3c7dfac1ed7d5ad46621323", // code de secours 2
 ];
 const KEY_STORE = "risque-tout-cle", AUTHOR_STORE = "risque-tout-createur", SKIP_STORE = "risque-tout-partages-supprimes";
+
+async function unlockWith(code) {
+  let h = ""; try { h = await codeHash(code); } catch (e) { return false; }
+  if (!KEY_HASHES.includes(h)) return false;
+  lsSet(UNLOCK_STORE, "1"); lsSet(KEY_STORE, normCode(code)); DEMO = false; return true;
+}
+
+function unlock() {
+  return `<section class="screen">
+    <div class="stack">
+      <span class="eyebrow">Version démo</span>
+      <h2>Débloquer le jeu complet</h2>
+      <p class="lead">La version démo propose 5 thèmes en mode Classique. Avec une clé d'accès, ce téléphone débloque tout le jeu :</p>
+    </div>
+    <ul class="unlock-list">
+      <li><b>${BUILTIN.length} séries de questions</b> réparties en ${new Set(BUILTIN.map(t => t.family)).size} thèmes</li>
+      <li>Le mode <b>Hardcore</b> et son Mega Risque Tout</li>
+      <li><b>Vos propres thèmes</b> : créer, partager, récupérer ceux des autres</li>
+      <li>Le réglage de la <b>valeur des questions</b></li>
+    </ul>
+    <div class="adder">
+      <label class="eyebrow" for="unlockKey">Clé d'accès</label>
+      <div class="player-row"><input id="unlockKey" autocomplete="off" autocapitalize="characters" placeholder="Ex. : XXXX-XXXX-XXXX"><button class="btn primary small" data-act="unlockOk">Débloquer</button></div>
+      ${S.unlockErr ? `<p class="draft-error">Clé non valable : vérifiez-la et réessayez.</p>` : ""}
+      <p class="hint-line">Une clé se saisit une seule fois : le téléphone reste débloqué. Les majuscules, espaces et tirets ne comptent pas.</p>
+    </div>
+    <div class="actions"><button class="btn ghost" data-act="closeUnlock">Retour</button></div>
+  </section>`;
+}
 const lsGet = (k, d) => { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } };
 const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
 let cloudSkip = (() => { try { return JSON.parse(lsGet(SKIP_STORE, "[]")) || []; } catch (e) { return []; } })();
 const saveSkip = () => lsSet(SKIP_STORE, JSON.stringify(cloudSkip));
+
+/* ---------- Version démo ----------
+   Sans clé d'accès : 5 thèmes et le mode Classique seulement. Les mêmes clés que pour le partage débloquent le jeu complet. */
+const UNLOCK_STORE = "risque-tout-debloque";
+const DEMO_THEMES = ["Géographie 1", "Cinéma 1", "Musique 1", "Sport 1", "Histoire 1"];
+// Un téléphone qui a déjà saisi une clé pour partager est considéré comme débloqué
+if (lsGet(KEY_STORE, "")) lsSet(UNLOCK_STORE, "1");
+let DEMO = lsGet(UNLOCK_STORE, "") !== "1";
+const demoIdx = () => DEMO_THEMES.map(n => NAMES.indexOf(n)).filter(i => i >= 0);
+const lockTag = `<span class="lock">Jeu complet</span>`;
 const normCode = t => String(t).trim().toUpperCase().normalize("NFD").replace(/[̀-ͯ\s-]/g, "");
 async function codeHash(t) {
   const h = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(KEY_SALT + normCode(t)));
@@ -2209,6 +2263,15 @@ const ACTS = {
   next: () => { S.turn = (S.turn + 1) % S.players.length; S.result = null; go("board"); },
   askEnd: () => { S.confirmEnd = true; render(); },
   newGame: () => go("modes"),
+  openUnlock: () => { S.unlockBack = S.screen; S.unlockErr = false; go("unlock"); },
+  closeUnlock: () => go(S.unlockBack && S.unlockBack !== "unlock" ? S.unlockBack : "home"),
+  unlockOk: () => {
+    const v = (document.getElementById("unlockKey") || {}).value || "";
+    unlockWith(v).then(ok => {
+      if (ok) { S.unlockErr = false; go(S.unlockBack && S.unlockBack !== "unlock" ? S.unlockBack : "home"); toast("Jeu complet débloqué !"); }
+      else { S.unlockErr = true; refresh(); document.getElementById("unlockKey")?.focus(); }
+    });
+  },
   openRules: () => { S.rules = true; render(); window.scrollTo(0, 0); },
   closeRules: () => { S.rules = false; render(); window.scrollTo(0, 0); },
   cancelEnd: () => { S.confirmEnd = false; render(); },
@@ -2219,7 +2282,7 @@ const ACTS = {
     r.done = true; refresh();
   },
   end: () => go("end"),
-  openMine: () => { S.back = S.screen; S.confirmDel = null; S.trashOpen = false; S.confirmEmpty = false; S.mauth = ""; S.pick = null; S.askKey = false; go("mine"); },
+  openMine: () => { if (DEMO) return ACTS.openUnlock(); S.back = S.screen; S.confirmDel = null; S.trashOpen = false; S.confirmEmpty = false; S.mauth = ""; S.pick = null; S.askKey = false; go("mine"); },
   closeMine: () => go(S.back && S.back !== "mine" && S.back !== "editor" ? S.back : "home"),
   toggleTrash: () => { S.trashOpen = !S.trashOpen; S.confirmEmpty = false; refresh(); },
   restoreAll: () => {
@@ -2242,7 +2305,7 @@ const ACTS = {
   keyOk: () => {
     const v = (document.getElementById("cloudkey") || {}).value || "";
     codeHash(v).then(h => {
-      if (KEY_HASHES.includes(h)) { lsSet(KEY_STORE, normCode(v)); S.askKey = false; S.keyErr = false; const o = S.shareOnly; S.shareOnly = null; refresh(); shareCloud(o); }
+      if (KEY_HASHES.includes(h)) { lsSet(KEY_STORE, normCode(v)); lsSet(UNLOCK_STORE, "1"); DEMO = false; S.askKey = false; S.keyErr = false; const o = S.shareOnly; S.shareOnly = null; refresh(); shareCloud(o); }
       else { S.keyErr = true; refresh(); }
     }).catch(() => { S.keyErr = true; refresh(); });
   },
@@ -2318,13 +2381,16 @@ function bind() {
     const f = file.files && file.files[0]; if (!f) return;
     const r = new FileReader(); r.onload = () => importThemes(String(r.result), false); r.onerror = () => toast("Fichier illisible"); r.readAsText(f);
   };
+  const uk = document.getElementById("unlockKey");
+  if (uk) uk.onkeydown = e => { if (e.key === "Enter") ACTS.unlockOk(); };
   const key = document.getElementById("cloudkey");
   if (key) key.onkeydown = e => { if (e.key === "Enter") ACTS.keyOk(); };
   app.querySelectorAll("[data-askdel]").forEach(b => b.onclick = () => { S.confirmDel = b.dataset.askdel; refresh(); });
   app.querySelectorAll("[data-del]").forEach(b => b.onclick = () => { deleteCustom(b.dataset.del); S.confirmDel = null; refresh(); });
   const hero = document.getElementById("heroMascot");
   if (hero) hero.onclick = poke;
-  app.querySelectorAll("[data-mode]").forEach(b => b.onclick = () => { const p = S.players; S = fresh(); S.players = p; S.mode = b.dataset.mode; go("players"); });
+  app.querySelectorAll("[data-mode]").forEach(b => b.onclick = () => {
+    if (DEMO && b.dataset.mode === "hardcore") return ACTS.openUnlock(); const p = S.players; S = fresh(); S.players = p; S.mode = b.dataset.mode; go("players"); });
   app.querySelectorAll("[data-player]").forEach(inp => inp.oninput = () => { S.players[+inp.dataset.player] = inp.value; save(); });
   app.querySelectorAll("[data-remove]").forEach(b => b.onclick = () => { S.players.splice(+b.dataset.remove, 1); refresh(); });
   app.querySelectorAll("[data-restore]").forEach(b => b.onclick = () => {
@@ -2381,8 +2447,12 @@ document.addEventListener("touchmove", e => { if (e.touches.length > 1 || (e.sca
 
 /* ---------- Bandeau de mise à jour ----------
    À chaque version publiée : changer APP_VERSION et ajouter ses nouveautés en tête de CHANGELOG. */
-const APP_VERSION = "11";
+const APP_VERSION = "12";
 const CHANGELOG = [
+  { v: "12", date: "14 octobre 2026", items: [
+    "Version démo : sans clé d'accès, le jeu propose 5 thèmes en mode Classique.",
+    "Une clé d'accès débloque le jeu complet : tous les thèmes, le mode Hardcore, vos thèmes perso et le réglage des valeurs.",
+  ]},
   { v: "11", date: "14 octobre 2026", items: [
     "Nouvel accueil : trois boutons, « Nouvelle partie », « Thèmes » et « Règles ».",
     "Le choix entre Classique et Hardcore se fait maintenant après « Nouvelle partie ».",

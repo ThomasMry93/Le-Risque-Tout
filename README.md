@@ -22,6 +22,8 @@ Le mode Hardcore est réservé aux majeurs. L'abus d'alcool est dangereux pour l
 
 ## Fonctionnalités
 
+- Version démo : 5 thèmes en mode Classique ; une clé d'accès débloque le jeu complet
+
 - 114 séries de 7 questions réparties en 46 thèmes, ajoutées au hasard ou au choix, même en cours de partie
 - Thèmes perso : créez vos propres thèmes et questions, partagez-les dans la collection commune en ligne et récupérez ceux des autres joueurs, ou passez-les d'un téléphone à l'autre par fichier
 - Valeurs des cases réglables (points, gorgées, culs secs du Risque Tout)
