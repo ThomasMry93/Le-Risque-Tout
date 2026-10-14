@@ -295,7 +295,7 @@ textarea.search { border-radius: 16px; resize: vertical; font-family: var(--f-te
   .qbar { grid-template-columns: 1fr; }
   .qbadge { padding: 12px; }
 }
-/* Mascotte : surgit en bas à droite à chaque changement d'écran, réagit, puis repart */
+/* Mascotte : surgit après chaque réponse (bonne ou mauvaise), réagit, puis repart */
 .mascot { position: fixed; right: 10px; bottom: calc(8px + env(safe-area-inset-bottom, 0px)); width: 104px; z-index: 50; pointer-events: none; transform: translateY(150%); }
 .mascot.show { animation: m-in .32s cubic-bezier(.2,.9,.3,1) forwards; }
 .mascot .bubble { transform-origin: 100% 100%; }
@@ -1498,7 +1498,8 @@ function react() {
   if (key === mascotKey) return;
   mascotKey = key;
   clearTimeout(mascotTimer);
-  if (S.screen === "home" && !S.rules) { mascotEl.className = "mascot"; return; } // la mascotte est déjà en grand sur l'accueil
+  // La mascotte ne surgit qu'après une réponse, bonne ou mauvaise (sur l'accueil, elle est déjà en grand)
+  if (S.rules || S.screen !== "verdict") { mascotEl.className = "mascot"; return; }
   const [m, line] = mood();
   const drunk = hard() && S.screen !== "home";
   mascotLine.textContent = drunk && line ? slur(line) : line;
@@ -2447,8 +2448,11 @@ document.addEventListener("touchmove", e => { if (e.touches.length > 1 || (e.sca
 
 /* ---------- Bandeau de mise à jour ----------
    À chaque version publiée : changer APP_VERSION et ajouter ses nouveautés en tête de CHANGELOG. */
-const APP_VERSION = "12";
+const APP_VERSION = "13";
 const CHANGELOG = [
+  { v: "13", date: "14 octobre 2026", items: [
+    "La mascotte ne surgit plus à chaque écran, seulement après une réponse : elle fête les bonnes et compatit aux mauvaises.",
+  ]},
   { v: "12", date: "14 octobre 2026", items: [
     "Version démo : sans clé d'accès, le jeu propose 5 thèmes en mode Classique.",
     "Une clé d'accès débloque le jeu complet : tous les thèmes, le mode Hardcore, vos thèmes perso et le réglage des valeurs.",
