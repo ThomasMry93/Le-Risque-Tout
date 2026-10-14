@@ -140,6 +140,16 @@ textarea.search { border-radius: 16px; resize: vertical; font-family: var(--f-te
 .draft-error { margin: 0; text-align: center; font-weight: 800; color: var(--ink); background: var(--red); border-radius: 14px; padding: 12px 16px; }
 .perso { font-family: var(--f-text); font-weight: 800; text-transform: none; letter-spacing: 0; color: var(--red); font-size: .72rem; }
 
+/* Menu de l'accueil */
+.menu { display: grid; gap: 14px; width: min(100%, 420px); margin: 0 auto; }
+.menu-btn { display: grid; justify-items: center; gap: 2px; font-family: var(--f-label); text-transform: uppercase; letter-spacing: .05em; font-size: 1.15rem; padding: 18px 20px; border-radius: 999px; border: 3px solid var(--red); background: #000; color: var(--ink); cursor: pointer; box-shadow: 4px 5px 0 rgba(0,0,0,.55); transition: transform .12s ease; }
+.menu-btn small { font-family: var(--f-text); font-weight: 700; text-transform: none; letter-spacing: 0; font-size: .78rem; color: var(--muted); }
+.menu-btn.primary { background: var(--red); border-color: #000; font-family: var(--f-score); font-weight: 400; font-size: 1.6rem; letter-spacing: .02em; padding: 20px; }
+.menu-btn.resume { background: var(--pill); color: var(--red); border-color: var(--pill); }
+.menu-btn.resume small { color: #555; }
+.menu-btn:active { transform: translateY(2px) scale(.98); }
+@media (prefers-reduced-motion: reduce) { .menu-btn { transition: none; } }
+
 /* Joueurs */
 .players { display: grid; gap: 10px; }
 .player-row { display: flex; gap: 10px; align-items: center; }
@@ -1424,7 +1434,7 @@ function refresh() { save(); render(); }
 
 /* ---------- Écrans ---------- */
 function render() {
-  const fn = S.rules ? rules : ({ home, players, themes, board, question, verdict, end, mine, editor }[S.screen] || home);
+  const fn = S.rules ? rules : ({ home, modes, players, themes, board, question, verdict, end, mine, editor }[S.screen] || home);
   app.innerHTML = fn();
   bind();
   react();
@@ -1442,6 +1452,7 @@ function mood() {
   const name = S.players[S.turn] || "";
   switch (S.screen) {
     case "home": return ["wave", "Prêts à tout risquer ?"];
+    case "modes": return ["think", "Classique ou Hardcore ?"];
     case "players": return ["wave", "Qui ose jouer ?"];
     case "themes": return ["think", "Choisissez bien vos thèmes…"];
     case "board": return ["wave", `À toi, ${name} !`];
@@ -1556,6 +1567,22 @@ function home() {
       </div>
       <p class="hero-tag">Le quiz où l'on peut tout gagner… ou tout perdre.</p>
     </div>
+    <nav class="menu">
+      ${resume ? `<button class="menu-btn resume" data-act="resume">Reprendre la partie<small>là où vous l'avez laissée</small></button>` : ""}
+      <button class="menu-btn primary" data-act="newGame">Nouvelle partie</button>
+      <button class="menu-btn" data-act="openMine">Thèmes<small>créer, partager, récupérer</small></button>
+      <button class="menu-btn" data-act="openRules">Règles</button>
+    </nav>
+    <p class="fine">Mode Hardcore réservé aux majeurs. L'abus d'alcool est dangereux pour la santé, à consommer avec modération.</p>
+  </section>`;
+}
+
+function modes() {
+  return `<section class="screen">
+    <div class="stack">
+      <span class="eyebrow">Nouvelle partie</span>
+      <h2>Choisissez le mode</h2>
+    </div>
     <div class="modes">
       <button class="mode" data-mode="classique">
         <span class="tag">Des points</span>
@@ -1568,11 +1595,7 @@ function home() {
         <span class="mode-line">Des gorgées à donner ou à boire, des culs secs et le Mega Risque Tout.</span>
       </button>
     </div>
-    <div class="actions">
-      ${resume ? `<button class="btn ghost" data-act="resume">Reprendre la partie en cours</button>` : ""}
-      <button class="btn ghost" data-act="openRules">Voir les règles</button>
-      <button class="btn ghost" data-act="openMine">Mes thèmes</button>
-    </div>
+    <div class="actions"><button class="btn ghost" data-act="home">Retour</button></div>
     <p class="fine">Mode Hardcore réservé aux majeurs. L'abus d'alcool est dangereux pour la santé, à consommer avec modération.</p>
   </section>`;
 }
@@ -2185,6 +2208,7 @@ const ACTS = {
   reveal: () => { S.current.revealed = true; refresh(); },
   next: () => { S.turn = (S.turn + 1) % S.players.length; S.result = null; go("board"); },
   askEnd: () => { S.confirmEnd = true; render(); },
+  newGame: () => go("modes"),
   openRules: () => { S.rules = true; render(); window.scrollTo(0, 0); },
   closeRules: () => { S.rules = false; render(); window.scrollTo(0, 0); },
   cancelEnd: () => { S.confirmEnd = false; render(); },
@@ -2357,8 +2381,12 @@ document.addEventListener("touchmove", e => { if (e.touches.length > 1 || (e.sca
 
 /* ---------- Bandeau de mise à jour ----------
    À chaque version publiée : changer APP_VERSION et ajouter ses nouveautés en tête de CHANGELOG. */
-const APP_VERSION = "10";
+const APP_VERSION = "11";
 const CHANGELOG = [
+  { v: "11", date: "14 octobre 2026", items: [
+    "Nouvel accueil : trois boutons, « Nouvelle partie », « Thèmes » et « Règles ».",
+    "Le choix entre Classique et Hardcore se fait maintenant après « Nouvelle partie ».",
+  ]},
   { v: "10", date: "14 octobre 2026", items: [
     "Thème supprimé par erreur ? Dans « Mes thèmes », le bouton « Récupérer les thèmes supprimés » le remet en place.",
   ]},
