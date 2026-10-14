@@ -23,7 +23,7 @@ Le mode Hardcore est réservé aux majeurs. L'abus d'alcool est dangereux pour l
 ## Fonctionnalités
 
 - 114 séries de 7 questions réparties en 46 thèmes, ajoutées au hasard ou au choix, même en cours de partie
-- Thèmes perso : créez vos propres thèmes et questions (gardés sur le téléphone)
+- Thèmes perso : créez vos propres thèmes et questions, partagez-les dans la collection commune en ligne et récupérez ceux des autres joueurs, ou passez-les d'un téléphone à l'autre par fichier
 - Valeurs des cases réglables (points, gorgées, culs secs du Risque Tout)
 - Scores et « reste à boire » ajustables à la main
 - Thèmes déjà joués signalés (indicateur masquable, historique effaçable)
@@ -35,3 +35,4 @@ Le mode Hardcore est réservé aux majeurs. L'abus d'alcool est dangereux pour l
 
 - `index.html` : tout le jeu (HTML, CSS, JavaScript et questions)
 - `manifest.webmanifest`, `sw.js`, `icons/` : installation sur téléphone et mode hors connexion
+- `cloudflare/worker.js` : serveur de la collection commune de thèmes (Cloudflare Worker + KV), avec sa page d'administration `/admin`

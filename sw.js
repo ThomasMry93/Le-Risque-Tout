@@ -2,7 +2,7 @@
 // Une nouvelle version se télécharge en arrière-plan mais ne s'installe que lorsque
 // le joueur appuie sur « Mettre à jour » dans le bandeau.
 // Changer VERSION à chaque mise à jour du jeu.
-const VERSION = "risque-tout-v7";
+const VERSION = "risque-tout-v8";
 const SHELL = ["./", "index.html", "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png", "icons/apple-touch-icon.png"];
 
 self.addEventListener("install", e => {

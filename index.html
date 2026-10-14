@@ -120,7 +120,17 @@ button:focus-visible, input:focus-visible { outline: 3px solid var(--ink); outli
 @keyframes upd-in { from { transform: translateY(-110%); } to { transform: translateY(0); } }
 @media (prefers-reduced-motion: reduce) { .update { animation: none; } }
 
+/* Messages brefs */
+.toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); translate: -50% 0; z-index: 90; max-width: min(420px, calc(100vw - 32px)); width: max-content; background: var(--pill); color: #111; border: 3px solid #000; border-radius: 16px; padding: 12px 16px; font-weight: 800; text-align: center; box-shadow: 4px 5px 0 rgba(0,0,0,.6); }
+.toast.pop { animation: b-pop .3s cubic-bezier(.2,1.6,.4,1); }
+
 /* Mes thèmes */
+.share-box { gap: 14px; }
+.share-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.share-grid .btn { padding: 12px 10px; font-size: .78rem; }
+@media (max-width: 420px) { .share-grid { grid-template-columns: 1fr; } }
+.key-box { display: grid; gap: 8px; }
+.chip.sel { background: var(--pill); color: var(--red); border-color: var(--pill); }
 .mine-list { display: grid; gap: 0; }
 .mine-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 0; border-top: 1px solid var(--line); flex-wrap: wrap; }
 .mine-info { display: grid; gap: 4px; min-width: 0; }
@@ -353,6 +363,7 @@ body.jolt #app { animation: jolt .28s linear; }
 <div class="wrap" id="app"></div>
 
 <div class="update" id="update" role="status" hidden></div>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 <div class="mascot" id="mascot" aria-hidden="true">
   <div class="bubble" id="mascotLine"></div>
@@ -1679,25 +1690,47 @@ function themes() {
 const SLOT_LABELS = ["x1 · la plus facile", "x2", "x3", "x4", "x5", "Risque Tout", "Mega Risque Tout · Hardcore, facultative"];
 
 function mine() {
+  const la = S.mauth || "";
+  const shown = custom.filter(c => !la || (authOf(c) || NOAUTH) === la);
+  const own = shown.filter(c => !c.cloud).length;
   return `<section class="screen">
     <div class="stack">
       <span class="eyebrow">Thèmes perso</span>
       <h2>Mes thèmes</h2>
-      <p class="lead">Créez vos propres thèmes avec vos questions. Ils sont gardés sur ce téléphone et apparaissent avec les autres au moment de choisir les thèmes.</p>
+      <p class="lead">Créez vos propres thèmes avec vos questions, partagez-les et récupérez ceux des autres. Ils sont gardés sur ce téléphone et apparaissent avec les autres au moment de choisir les thèmes.</p>
     </div>
-    ${custom.length ? `<div class="mine-list">${custom.map(c => {
+    ${pickPanel()}
+    ${authorChips()}
+    ${custom.length ? `<div class="mine-list">${shown.map(c => {
       const i = THEMES.findIndex(t => t.custom === c.id);
       return `<div class="mine-row">
-        <div class="mine-info"><span class="family-name">${esc(NAMES[i])}</span><span class="hint-line">${c.q.filter(x => x[0]).length} questions</span></div>
+        <div class="mine-info"><span class="family-name">${esc(NAMES[i])}${c.cloud ? ` <small class="perso">partagé</small>` : ""}</span><span class="hint-line">${c.q.filter(x => x[0]).length} questions${authOf(c) ? ` · par ${esc(authOf(c))}` : ""}</span></div>
         ${S.confirmDel === c.id
           ? `<span class="top-links"><button class="link" data-act="cancelDel">Annuler</button><button class="btn primary small" data-del="${c.id}">Supprimer</button></span>`
           : `<span class="top-links"><button class="btn small" data-editc="${c.id}">Modifier</button><button class="link" data-askdel="${c.id}">Supprimer</button></span>`}
       </div>`;
-    }).join("")}</div>`
-    : `<div class="adder"><p class="empty">Aucun thème perso pour l'instant. Créez le premier : un nom, puis 6 questions de la plus facile à la plus difficile (7 pour le mode Hardcore).</p></div>`}
+    }).join("")}</div>
+    ${la && shown.length ? `<div class="played-bar"><span class="hint-line">Ces ${plural(shown.length, "thème", "thèmes")} seulement :</span>
+      <span class="top-links"><button class="btn small" data-act="exportGroup">Exporter (${shown.length})</button>${own ? `<button class="btn small" data-act="shareGroup">Partager en ligne (${own})</button>` : ""}</span></div>` : ""}`
+    : `<div class="adder"><p class="empty">Aucun thème perso pour l'instant. Créez le premier : un nom, puis 6 questions de la plus facile à la plus difficile (7 pour le mode Hardcore). Vous pouvez aussi récupérer les thèmes partagés par les autres joueurs, plus bas.</p></div>`}
     <div class="actions">
       <button class="btn ghost" data-act="closeMine">Retour</button>
       <button class="btn primary" data-act="newCustom">Créer un thème</button>
+    </div>
+    <div class="adder share-box">
+      <span class="eyebrow">Partager et récupérer</span>
+      <div class="share-grid">
+        <button class="btn" data-act="getCloud">Récupérer les thèmes partagés</button>
+        <button class="btn" data-act="shareCloud" ${custom.some(c => !c.cloud) ? "" : "disabled"}>Partager mes thèmes</button>
+        <button class="btn ghost" data-act="saveMine" ${custom.length ? "" : "disabled"}>Enregistrer dans un fichier</button>
+        <button class="btn ghost" data-act="importFile">Importer un fichier</button>
+      </div>
+      <input type="file" id="importfile" accept=".json,application/json,text/plain" hidden>
+      ${S.askKey ? `<div class="key-box"><label class="hint-line" for="cloudkey">Pour partager, saisissez une fois la clé d'accès du jeu.</label>
+        <div class="player-row"><input id="cloudkey" autocomplete="off" autocapitalize="characters" placeholder="Clé d'accès"><button class="btn primary small" data-act="keyOk">OK</button></div>
+        ${S.keyErr ? `<p class="draft-error">Clé non valable</p>` : ""}</div>` : ""}
+      ${cloudSkip.length ? `<button class="link" data-act="unskip">Récupérer aussi ${cloudSkip.length > 1 ? `les ${cloudSkip.length} thèmes partagés que j'ai supprimés` : "le thème partagé que j'ai supprimé"}</button>` : ""}
+      <p class="hint-line">« Partager » envoie les thèmes créés sur ce téléphone dans la collection commune en ligne. « Récupérer » ajoute les thèmes partagés par tout le monde, sans doublon : ils restent sur le téléphone même s'ils disparaissent de la collection. Le fichier sert à garder ses thèmes ou à les passer sur un autre téléphone.</p>
     </div>
   </section>`;
 }
@@ -1713,6 +1746,8 @@ function editor() {
     <div class="adder">
       <label class="eyebrow" for="draftName">Nom du thème</label>
       <input id="draftName" class="search" maxlength="30" placeholder="Ex. : Nos souvenirs de vacances" value="${esc(d.name)}" data-draft="name">
+      <label class="eyebrow" for="draftAuthor">Créateur</label>
+      <input id="draftAuthor" class="search" maxlength="40" placeholder="Votre nom ou pseudo" autocomplete="nickname" value="${esc(d.author || "")}" data-draft="author">
     </div>
     ${d.q.map(([q, a], k) => `<div class="adder qedit ${k >= 5 ? "qedit-risk" : ""}">
       <span class="eyebrow">${SLOT_LABELS[k]}</span>
@@ -1730,6 +1765,7 @@ function editor() {
 // Supprime un thème perso et décale les numéros des thèmes qui le suivent dans la partie en cours
 function deleteCustom(id) {
   const oi = THEMES.findIndex(t => t.custom === id);
+  skipCloud(custom.find(c => c.id === id));
   custom = custom.filter(c => c.id !== id);
   saveCustom();
   const shift = i => i > oi ? i - 1 : i;
@@ -1737,6 +1773,168 @@ function deleteCustom(id) {
   const used = {}; Object.keys(S.used || {}).forEach(k => { const [t, c] = k.split("-").map(Number); if (t !== oi) used[shift(t) + "-" + c] = S.used[k]; }); S.used = used;
   const bonus = {}; Object.keys(S.bonus || {}).forEach(k => { if (+k !== oi) bonus[shift(+k)] = S.bonus[k]; }); S.bonus = bonus;
   rebuildThemes();
+}
+
+/* ---------- Partage des thèmes perso : fichiers et collection commune en ligne ---------- */
+// Collection commune (Cloudflare Worker, voir cloudflare/worker.js) : vide = pas encore branchée
+const CLOUD_URL = "https://risque-tout-themes.thomas-morey.workers.dev";
+// Clé d'accès pour partager : seules ses empreintes sont écrites ici (mêmes que KEY_HASHES du serveur)
+const KEY_SALT = "le-risque-tout/2026";
+const KEY_HASHES = ["6e15144c93c5f57f1b7784e00782d7caa007b453378c4eeb44caf894b70f5e8f"];
+const KEY_STORE = "risque-tout-cle", AUTHOR_STORE = "risque-tout-createur", SKIP_STORE = "risque-tout-partages-supprimes";
+const lsGet = (k, d) => { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+let cloudSkip = (() => { try { return JSON.parse(lsGet(SKIP_STORE, "[]")) || []; } catch (e) { return []; } })();
+const saveSkip = () => lsSet(SKIP_STORE, JSON.stringify(cloudSkip));
+const normCode = t => String(t).trim().toUpperCase().normalize("NFD").replace(/[̀-ͯ\s-]/g, "");
+async function codeHash(t) {
+  const h = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(KEY_SALT + normCode(t)));
+  return [...new Uint8Array(h)].map(x => x.toString(16).padStart(2, "0")).join("");
+}
+const NOAUTH = "__none";
+const authOf = c => (c.author || "").trim();
+// Doublon : mêmes questions x1 et Risque Tout (sans accents, ponctuation ni espaces en trop)
+const normText = t => String(t || "").trim().replace(/\s+/g, " ").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^\w ]/g, "");
+const dupKey = c => normText(c.q[0][0]) + "|" + normText(c.q[5][0]);
+// Un thème venu de la collection et supprimé ici n'est plus re-récupéré
+function skipCloud(c) { if (c && c.cloud) { const k = String(c.cloudId || c.id); if (!cloudSkip.includes(k)) { cloudSkip.push(k); saveSkip(); } } }
+// Ménage au démarrage : un thème récupéré qui en double un autre est retiré
+(() => {
+  const seen = new Set(BUILTIN.map(dupKey)), ids = new Set();
+  custom.filter(c => !c.cloud).forEach(c => { seen.add(dupKey(c)); ids.add(c.id); });
+  const before = custom.length;
+  custom = custom.filter(c => { if (!c.cloud) return true; const k = dupKey(c); if (seen.has(k) || ids.has(c.id)) return false; seen.add(k); ids.add(c.id); return true; });
+  if (custom.length !== before) { saveCustom(); rebuildThemes(); }
+})();
+
+// Thème lu dans un fichier ou dans la collection : nettoyé, ou null s'il est incomplet
+function cleanTheme(c) {
+  if (!c || !Array.isArray(c.q) || c.q.length < 6) return null;
+  const q = [0, 1, 2, 3, 4, 5, 6].map(k => [String((c.q[k] || [])[0] || "").trim().slice(0, 200), String((c.q[k] || [])[1] || "").trim().slice(0, 60)]);
+  const name = String(c.name || "").replace(/[<>"&]/g, "").trim().slice(0, 30);
+  if (!name || q.slice(0, 6).some(([a, b]) => !a || !b) || !q[6][0] !== !q[6][1]) return null;
+  const t = { id: String(c.id || ""), name, q };
+  if (authOf(c)) t.author = authOf(c).slice(0, 40);
+  return t;
+}
+
+function toast(msg) {
+  const el = document.getElementById("toast");
+  el.textContent = msg; el.hidden = false;
+  el.classList.remove("pop"); void el.offsetWidth; el.classList.add("pop");
+  clearTimeout(toast.t); toast.t = setTimeout(() => { el.hidden = true; }, 3800);
+}
+
+/* Enregistrer un fichier : feuille de partage (iPhone : « Enregistrer dans Fichiers »), sinon téléchargement, sinon presse-papiers */
+function saveFile(fname, data, okMsg) {
+  const clip = () => {
+    try { navigator.clipboard.writeText(data).then(() => toast("Fichier copié : collez-le dans un message ou une note"), () => toast("Enregistrement impossible sur cet appareil")); }
+    catch (e) { toast("Enregistrement impossible sur cet appareil"); }
+  };
+  try {
+    const file = new File([data], fname, { type: "application/json" });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({ files: [file], title: "Thèmes Le Risque Tout" }).catch(e => { if (e && e.name !== "AbortError") clip(); });
+      return;
+    }
+    if (!window.claude) {
+      const u = URL.createObjectURL(file), l = document.createElement("a");
+      l.href = u; l.download = fname; document.body.appendChild(l); l.click(); l.remove();
+      setTimeout(() => URL.revokeObjectURL(u), 4000); toast(okMsg); return;
+    }
+  } catch (e) {}
+  clip();
+}
+const dayStamp = () => new Date().toISOString().slice(0, 10);
+const forFile = c => ({ id: c.id, name: c.name, ...(authOf(c) ? { author: authOf(c) } : {}), q: c.q });
+function saveMine() {
+  if (!custom.length) return toast("Aucun thème perso à enregistrer");
+  const data = JSON.stringify({ format: "le-risque-tout", kind: "custom", exportedAt: new Date().toISOString(), total: custom.length, themes: custom.map(forFile) }, null, 1);
+  saveFile(`le-risque-tout-mes-themes-${dayStamp()}.json`, data, `${plural(custom.length, "thème enregistré", "thèmes enregistrés")}`);
+}
+function exportGroup() {
+  const la = S.mauth || "", list = custom.filter(c => !la || (authOf(c) || NOAUTH) === la);
+  if (!list.length) return toast("Aucun thème à exporter");
+  const data = JSON.stringify({ format: "le-risque-tout", kind: "selection", exportedAt: new Date().toISOString(), total: list.length, themes: list.map(forFile) }, null, 1);
+  saveFile(`le-risque-tout-selection-${dayStamp()}.json`, data, `${plural(list.length, "thème exporté", "thèmes exportés")}`);
+}
+
+/* Importer (fichier ou collection) sans doublon ; plusieurs créateurs : on demande lesquels */
+function importThemes(text, cloud) {
+  let d; try { d = JSON.parse(text); } catch (e) { return toast(cloud ? "Réponse du serveur illisible" : "Fichier illisible : choisissez un fichier enregistré depuis Le Risque Tout"); }
+  const arr = Array.isArray(d) ? d : (d && Array.isArray(d.themes) ? d.themes : null);
+  if (!arr) return toast(cloud ? "Réponse du serveur illisible" : "Ce fichier ne contient pas de thèmes du Risque Tout");
+  const have = new Set([...custom, ...BUILTIN].map(dupKey)), mineIds = new Set(custom.map(c => c.id)), ids = new Set(mineIds);
+  let dup = 0, skipped = 0; const fresh = [];
+  arr.forEach((raw, i) => {
+    const t = cleanTheme(raw); if (!t) return;
+    if (cloud) { if (cloudSkip.includes(t.id)) { skipped++; return; } t.cloud = 1; t.cloudId = t.id; }
+    if (have.has(dupKey(t)) || (cloud && mineIds.has(t.id))) { dup++; return; }
+    if (!/^[\w-]+$/.test(t.id) || ids.has(t.id)) t.id = "c" + Date.now().toString(36) + "_" + i;
+    fresh.push(t); have.add(dupKey(t)); ids.add(t.id);
+  });
+  const groups = [...new Set(fresh.map(c => authOf(c) || NOAUTH))];
+  if (groups.length > 1) {
+    S.pick = { themes: fresh, dup, skipped, cloud: !!cloud, sel: groups }; refresh();
+    toast("Choisissez les créateurs à importer");
+    setTimeout(() => document.getElementById("pickpanel")?.scrollIntoView({ block: "center" }), 60);
+    return;
+  }
+  commitImport(fresh, dup, cloud, skipped);
+}
+function commitImport(list, dup, cloud, skipped) {
+  custom.push(...list); saveCustom(); rebuildThemes(); refresh();
+  const n = list.length;
+  const sk = skipped ? ` · ${skipped} supprimé${skipped > 1 ? "s" : ""} sur ce téléphone, ignoré${skipped > 1 ? "s" : ""}` : "";
+  toast((n ? `${plural(n, "thème ajouté", "thèmes ajoutés")}${dup ? ` · ${dup} déjà présent${dup > 1 ? "s" : ""}` : ""}`
+    : dup ? "Ces thèmes sont déjà dans le jeu"
+    : cloud ? (skipped ? "Aucun nouveau thème" : "Aucun thème partagé pour l'instant") : "Aucun thème valable dans ce fichier") + sk);
+}
+function pickPanel() {
+  const p = S.pick; if (!p) return "";
+  const n = {}; p.themes.forEach(c => { const a = authOf(c) || NOAUTH; n[a] = (n[a] || 0) + 1; });
+  const names = Object.keys(n).sort((a, b) => a === NOAUTH ? 1 : b === NOAUTH ? -1 : a.localeCompare(b, "fr", { sensitivity: "base" }));
+  const tot = p.themes.filter(c => p.sel.includes(authOf(c) || NOAUTH)).length;
+  return `<div class="adder" id="pickpanel">
+    <span class="eyebrow">${p.cloud ? "Thèmes partagés" : "Fichier"} : choisir les créateurs</span>
+    <p class="hint-line">${plural(p.themes.length, "nouveau thème", "nouveaux thèmes")}${p.dup ? ` (${p.dup} déjà dans le jeu)` : ""}. Touchez un nom pour l'inclure ou l'exclure.</p>
+    <div class="chips">${names.map(a => `<button class="chip ${p.sel.includes(a) ? "sel" : ""}" data-pickauth="${esc(a)}" aria-pressed="${p.sel.includes(a)}">${p.sel.includes(a) ? "✓ " : ""}${a === NOAUTH ? "Sans nom" : esc(a)} · ${n[a]}</button>`).join("")}</div>
+    <div class="actions"><button class="btn ghost small" data-act="pickNo">Annuler</button><button class="btn primary small" data-act="pickOk" ${tot ? "" : "disabled"}>Importer ${plural(tot, "thème", "thèmes")}</button></div>
+  </div>`;
+}
+// Filtre Créateur dans « Mes thèmes »
+function authorChips() {
+  const n = {}; custom.forEach(c => { const a = authOf(c) || NOAUTH; n[a] = (n[a] || 0) + 1; });
+  const names = Object.keys(n).filter(a => a !== NOAUTH).sort((a, b) => a.localeCompare(b, "fr", { sensitivity: "base" }));
+  if (!names.length) return "";
+  const la = S.mauth || "", nb = la ? (n[la] || 0) : 0, who = la === NOAUTH ? "sans créateur" : `de ${esc(la)}`;
+  const opts = [["", "Tous", custom.length], ...names.map(a => [a, a, n[a]]), ...(n[NOAUTH] ? [[NOAUTH, "Sans nom", n[NOAUTH]]] : [])];
+  return `<div class="stack" style="gap:10px"><span class="eyebrow">Créateur</span>
+    <div class="chips">${opts.map(([k, l, c]) => `<button class="chip ${la === k ? "sel" : ""}" data-mauth="${esc(k)}">${esc(l)} · ${c}</button>`).join("")}</div>
+    ${nb ? (S.confirmAuthDel
+      ? `<div class="actions" style="justify-content:flex-start"><button class="btn ghost small" data-act="authDelNo">Annuler</button><button class="btn primary small" data-act="authDel">Supprimer les ${nb}</button></div>`
+      : `<button class="link" style="justify-self:start" data-act="authDelAsk">Supprimer ${nb > 1 ? `les ${nb} thèmes` : "le thème"} ${who}</button>`) : ""}</div>`;
+}
+
+/* Collection commune : envoyer mes thèmes (pas ceux récupérés), récupérer ceux de tout le monde */
+function shareCloud(only) {
+  if (!CLOUD_URL) return toast("Le partage en ligne arrive bientôt");
+  const key = lsGet(KEY_STORE, "");
+  if (!key) { S.askKey = true; S.shareOnly = only || null; refresh(); setTimeout(() => { const i = document.getElementById("cloudkey"); if (i) { i.scrollIntoView({ block: "center" }); i.focus(); } }, 60); return; }
+  const list = custom.filter(c => !c.cloud && (!only || only.includes(c.id))).map(c => ({ ...forFile(c), author: authOf(c) || lsGet(AUTHOR_STORE, "") }));
+  if (!list.length) return toast("Aucun thème créé sur ce téléphone à partager");
+  toast("Envoi en cours…");
+  fetch(CLOUD_URL + "/themes", { method: "POST", headers: { "Content-Type": "text/plain" }, body: JSON.stringify({ key, themes: list }) })
+    .then(r => r.json()).then(r => {
+      if (r.ok) { const n = r.added + r.updated; toast(`${plural(n, "thème partagé", "thèmes partagés")}${r.status === "en attente" ? " · visibles après validation" : ""}`); }
+      else if (/clé/.test(r.error || "")) { lsSet(KEY_STORE, ""); try { localStorage.removeItem(KEY_STORE); } catch (e) {} S.askKey = true; refresh(); toast("Clé d'accès refusée : saisissez-la à nouveau"); }
+      else toast("Partage impossible : " + (r.error || "erreur"));
+    }).catch(() => toast("Pas de connexion : réessayez plus tard"));
+}
+function getCloud() {
+  if (!CLOUD_URL) return toast("La collection en ligne arrive bientôt");
+  toast("Récupération en cours…");
+  fetch(CLOUD_URL + "/themes", { cache: "no-store" }).then(r => r.text()).then(t => importThemes(t, true)).catch(() => toast("Pas de connexion : réessayez plus tard"));
 }
 
 function topBar() {
@@ -1952,9 +2150,32 @@ const ACTS = {
     r.done = true; refresh();
   },
   end: () => go("end"),
-  openMine: () => { S.back = S.screen; S.confirmDel = null; go("mine"); },
+  openMine: () => { S.back = S.screen; S.confirmDel = null; S.mauth = ""; S.pick = null; S.askKey = false; go("mine"); },
   closeMine: () => go(S.back && S.back !== "mine" && S.back !== "editor" ? S.back : "home"),
-  newCustom: () => { S.draft = { id: null, name: "", q: SLOT_LABELS.map(() => ["", ""]) }; S.draftError = ""; go("editor"); },
+  newCustom: () => { S.draft = { id: null, name: "", author: lsGet(AUTHOR_STORE, ""), q: SLOT_LABELS.map(() => ["", ""]) }; S.draftError = ""; go("editor"); },
+  getCloud: () => getCloud(),
+  shareCloud: () => shareCloud(null),
+  shareGroup: () => { const la = S.mauth || ""; shareCloud(custom.filter(c => !c.cloud && (authOf(c) || NOAUTH) === la).map(c => c.id)); },
+  saveMine: () => saveMine(),
+  exportGroup: () => exportGroup(),
+  importFile: () => { const f = document.getElementById("importfile"); if (f) { f.value = ""; f.click(); } },
+  unskip: () => { cloudSkip = []; saveSkip(); getCloud(); },
+  keyOk: () => {
+    const v = (document.getElementById("cloudkey") || {}).value || "";
+    codeHash(v).then(h => {
+      if (KEY_HASHES.includes(h)) { lsSet(KEY_STORE, normCode(v)); S.askKey = false; S.keyErr = false; const o = S.shareOnly; S.shareOnly = null; refresh(); shareCloud(o); }
+      else { S.keyErr = true; refresh(); }
+    }).catch(() => { S.keyErr = true; refresh(); });
+  },
+  pickNo: () => { S.pick = null; refresh(); toast("Import annulé"); },
+  pickOk: () => { const p = S.pick; if (p) { S.pick = null; commitImport(p.themes.filter(c => p.sel.includes(authOf(c) || NOAUTH)), p.dup, p.cloud, p.skipped); } },
+  authDelAsk: () => { S.confirmAuthDel = true; refresh(); },
+  authDelNo: () => { S.confirmAuthDel = false; refresh(); },
+  authDel: () => {
+    const la = S.mauth || "";
+    custom.filter(c => (authOf(c) || NOAUTH) === la).map(c => c.id).forEach(deleteCustom);
+    S.mauth = ""; S.confirmAuthDel = false; refresh(); toast("Thèmes supprimés");
+  },
   cancelDel: () => { S.confirmDel = null; refresh(); },
   cancelDraft: () => { S.draft = null; go("mine"); },
   saveDraft: () => {
@@ -1962,12 +2183,15 @@ const ACTS = {
     const holes = d.q.slice(0, 6).map(([q, a], k) => q.trim() && a.trim() ? null : SLOT_LABELS[k].split(" ·")[0]).filter(Boolean);
     const megaHalf = !!d.q[6][0].trim() !== !!d.q[6][1].trim();
     if (!name) S.draftError = "Donnez un nom au thème.";
+    else if (!(d.author || "").trim()) S.draftError = "Indiquez le créateur du thème (votre nom ou pseudo).";
     else if (holes.length) S.draftError = `Il manque la question ou la réponse pour : ${holes.join(", ")}.`;
     else if (megaHalf) S.draftError = "Mega Risque Tout : remplissez la question et la réponse, ou laissez les deux vides.";
     else {
       const q = d.q.map(([a, b]) => [a.trim(), b.trim()]);
-      if (d.id) { const c = custom.find(x => x.id === d.id); c.name = name; c.q = q; }
-      else custom.push({ id: "c" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name, q });
+      const author = (d.author || "").replace(/[<>"&]/g, "").trim().slice(0, 40);
+      lsSet(AUTHOR_STORE, author);
+      if (d.id) { const c = custom.find(x => x.id === d.id); c.name = name; c.q = q; c.author = author; }
+      else custom.push({ id: "c" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name, author, q });
       saveCustom(); rebuildThemes();
       S.draft = null; S.draftError = ""; go("mine"); return;
     }
@@ -1998,13 +2222,25 @@ function bind() {
   app.querySelectorAll("[data-act]").forEach(b => b.onclick = ACTS[b.dataset.act]);
   app.querySelectorAll("[data-draft]").forEach(el => el.oninput = () => {
     const k = el.dataset.draft, d = S.draft;
-    if (k === "name") d.name = el.value; else d.q[+k.slice(1)][k[0] === "q" ? 0 : 1] = el.value;
+    if (k === "name" || k === "author") d[k] = el.value; else d.q[+k.slice(1)][k[0] === "q" ? 0 : 1] = el.value;
     save();
   });
   app.querySelectorAll("[data-editc]").forEach(b => b.onclick = () => {
     const c = custom.find(x => x.id === b.dataset.editc);
-    S.draft = { id: c.id, name: c.name, q: SLOT_LABELS.map((_, k) => [...(c.q[k] || ["", ""])]) }; S.draftError = ""; go("editor");
+    S.draft = { id: c.id, name: c.name, author: c.author || lsGet(AUTHOR_STORE, ""), q: SLOT_LABELS.map((_, k) => [...(c.q[k] || ["", ""])]) }; S.draftError = ""; go("editor");
   });
+  app.querySelectorAll("[data-mauth]").forEach(b => b.onclick = () => { S.mauth = b.dataset.mauth; S.confirmAuthDel = false; refresh(); });
+  app.querySelectorAll("[data-pickauth]").forEach(b => b.onclick = () => {
+    const p = S.pick, a = b.dataset.pickauth;
+    if (p) { p.sel = p.sel.includes(a) ? p.sel.filter(x => x !== a) : [...p.sel, a]; refresh(); }
+  });
+  const file = document.getElementById("importfile");
+  if (file) file.onchange = () => {
+    const f = file.files && file.files[0]; if (!f) return;
+    const r = new FileReader(); r.onload = () => importThemes(String(r.result), false); r.onerror = () => toast("Fichier illisible"); r.readAsText(f);
+  };
+  const key = document.getElementById("cloudkey");
+  if (key) key.onkeydown = e => { if (e.key === "Enter") ACTS.keyOk(); };
   app.querySelectorAll("[data-askdel]").forEach(b => b.onclick = () => { S.confirmDel = b.dataset.askdel; refresh(); });
   app.querySelectorAll("[data-del]").forEach(b => b.onclick = () => { deleteCustom(b.dataset.del); S.confirmDel = null; refresh(); });
   const hero = document.getElementById("heroMascot");
@@ -2053,8 +2289,13 @@ document.addEventListener("touchmove", e => { if (e.touches.length > 1 || (e.sca
 
 /* ---------- Bandeau de mise à jour ----------
    À chaque version publiée : changer APP_VERSION et ajouter ses nouveautés en tête de CHANGELOG. */
-const APP_VERSION = "7";
+const APP_VERSION = "8";
 const CHANGELOG = [
+  { v: "8", date: "14 octobre 2026", items: [
+    "Thèmes partagés : dans « Mes thèmes », récupérez les thèmes créés par les autres joueurs et partagez les vôtres.",
+    "Chaque thème perso indique son créateur, et vous pouvez trier vos thèmes par créateur.",
+    "Enregistrez vos thèmes dans un fichier pour les garder ou les passer sur un autre téléphone.",
+  ]},
   { v: "7", date: "14 octobre 2026", items: [
     "Ce bandeau présente désormais les nouveautés de chaque mise à jour.",
     "Les prochaines mises à jour s'installeront quand vous appuierez sur « Mettre à jour ».",
